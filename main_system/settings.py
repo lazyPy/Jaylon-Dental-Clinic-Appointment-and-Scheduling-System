@@ -13,6 +13,8 @@ import os
 from pathlib import Path
 from urllib.parse import urlparse
 
+import dj_database_url
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -75,21 +77,13 @@ WSGI_APPLICATION = 'main_system.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# DATABASE_URL is an environment variable with the PostgreSQL connection string
-DATABASE_URL = os.environ.get('postgresql://dental_clinic_qddt_user:NqklOkvimlXMYelMmlBnRZF4WSUdKPYa@dpg-cr7befbqf0us73bc7mt0-a.oregon-postgres.render.com/dental_clinic_qddt')
 
-# Parse the URL
-url = urlparse(DATABASE_URL)
+# Fetch the DATABASE_URL from environment variables
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
+# Configure the DATABASES setting using dj-database-url
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': url.path[1:],  # Remove the leading '/'
-        'USER': url.username,
-        'PASSWORD': url.password,
-        'HOST': url.hostname,
-        'PORT': url.port,
-    }
+    'default': dj_database_url.config(default=DATABASE_URL)
 }
 
 # DATABASES = {
