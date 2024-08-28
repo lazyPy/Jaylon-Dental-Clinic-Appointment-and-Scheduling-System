@@ -77,7 +77,6 @@ WSGI_APPLICATION = 'main_system.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-
 # Fetch the DATABASE_URL from environment variables
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
