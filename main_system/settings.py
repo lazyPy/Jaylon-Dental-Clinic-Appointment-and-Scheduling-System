@@ -76,24 +76,13 @@ WSGI_APPLICATION = 'main_system.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'dental_clinic_qddt',
-        'USER': 'dental_clinic_qddt_user',
-        'HOST': 'dpg-cr7befbqf0us73bc7mt0-a.oregon-postgres.render.com',
-        'PASSWORD': 'NqklOkvimlXMYelMmlBnRZF4WSUdKPYa',
-        'PORT': '5432',
-    }
-}
-
 # Fetch the DATABASE_URL from environment variables
-# DATABASE_URL = os.environ.get('DATABASE_URL')
+DATABASE_URL = os.environ.get('POSTGRES_URL')
 
 # Configure the DATABASES setting using dj-database-url
-# DATABASES = {
-#    'default': dj_database_url.config(default=DATABASE_URL)
-# }
+DATABASES = {
+    'default': dj_database_url.config(default=DATABASE_URL)
+}
 
 # DATABASES = {
 #     'default': {
