@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'backend',
     'frontend',
+    'cloudinary_storage',
+    'cloudinary',
 ]
 
 MIDDLEWARE = [
@@ -137,6 +139,14 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Base url to serve media files
 MEDIA_URL = 'media/'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'djefvzr2g',
+    'API_KEY': '298175314535528',
+    'API_SECRET': 'IKhwkkE6aiUdHZkICLig0UfGTn0',
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
