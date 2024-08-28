@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load django_bootstrap5 %}
+
+{% block content %}
+<h2>Welcome, {{ user.name }}!</h2>
+
+<h3>Your Appointments</h3>
+<ul>
+    {% for appointment in appointments %}
+    <li>
+        Service: {{ appointment.service }}<br>
+        Date: {{ appointment.date }}<br>
+        Time: {{ appointment.time }}<br>
+        Status: {{ appointment.status }}<br>
+        Created On: {{ appointment.created_at }}
+    </li>
+    {% empty %}
+    <li>No appointments found.</li>
+    {% endfor %}
+</ul>
+
+<h3>Profile Management</h3>
+<ul>
+    <li><a href="{% url 'update-profile' %}">Update Profile</a></li>
+</ul>
+
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAppointment">
+    Add Appointment
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="addAppointment" tabindex="-1" aria-labelledby="addAppointmentLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAppointmentLabel">Schedule Appointment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
