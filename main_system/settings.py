@@ -79,10 +79,10 @@ WSGI_APPLICATION = 'main_system.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'verceldb',
-        'USER': 'default',
-        'HOST': 'ep-quiet-sound-a1wv4pst-pooler.ap-southeast-1.aws.neon.tech',
-        'PASSWORD': 'lbCEqn5KGXD4',
+        'NAME': 'dental_clinic_qddt',
+        'USER': 'dental_clinic_qddt_user',
+        'HOST': 'dpg-cr7befbqf0us73bc7mt0-a.oregon-postgres.render.com',
+        'PASSWORD': 'NqklOkvimlXMYelMmlBnRZF4WSUdKPYa',
         'PORT': '5432',
     }
 }
