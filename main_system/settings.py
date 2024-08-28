@@ -28,7 +28,6 @@ SECRET_KEY = 'django-insecure--vq!j-qjnq#_1*wn8e(^&q-vd=bn=%ar43gz1gjul2fvhlaflq
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
-CSRF_TRUSTED_ORIGINS = ['https://cavariety-web2-fp48.onrender.com']
 
 # Application definition
 
