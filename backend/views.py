@@ -65,8 +65,9 @@ def get_available_time_slots(request):
     # Get operating hours for the selected date
     start_time, end_time = get_operating_hours(selected_date)
 
-    # Get all appointments for the selected date
-    appointments = Appointment.objects.filter(date=selected_date).order_by('start_time')
+    # Get all non-cancelled appointments for the selected date
+    appointments = Appointment.objects.filter(date=selected_date, status__in=['Pending', 'Approved']).order_by(
+        'start_time')
 
     # Create a list of busy time slots
     busy_slots = [(datetime.combine(selected_date, apt.start_time),
@@ -138,8 +139,8 @@ def view_dashboard(request):
         messages.success(request, 'Appointment added successfully.')
         return redirect('dashboard')
 
-    # Retrieve all data
-    now = timezone.now()
+    # Retrieve all data=
+    now = timezone.localtime(timezone.now())
     today = now.date()
 
     all_appointments = Appointment.objects.count()

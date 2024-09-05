@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import BaseUserManager
 from django.utils.crypto import get_random_string
+from django.utils import timezone
 
 
 class CustomUserManager(BaseUserManager):
@@ -41,7 +42,10 @@ class User(AbstractUser):
     birthday = models.DateField(null=True, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
     email_verified = models.BooleanField(default=False)
-    verification_token = models.CharField(max_length=100, blank=True)
+    verification_token = models.CharField(max_length=100, blank=True, null=True)
+    verification_token_created = models.DateTimeField(blank=True, null=True)
+    password_reset_token = models.CharField(max_length=100, blank=True, null=True)
+    password_reset_token_created = models.DateTimeField(blank=True, null=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -50,11 +54,12 @@ class User(AbstractUser):
 
     def generate_verification_token(self):
         self.verification_token = get_random_string(length=32)
+        self.verification_token_created = timezone.now()
         self.save()
 
-    def verify_email(self):
-        self.email_verified = True
-        self.verification_token = ''
+    def generate_password_reset_token(self):
+        self.password_reset_token = get_random_string(length=32)
+        self.password_reset_token_created = timezone.now()
         self.save()
 
     def __str__(self):

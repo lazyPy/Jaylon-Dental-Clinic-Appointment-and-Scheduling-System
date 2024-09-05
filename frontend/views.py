@@ -49,13 +49,11 @@ def view_client_dashboard(request):
             email = request.POST.get('email')
             message = request.POST.get('message')
 
-            # Prepare email content using the template
-            context = {
+            html_message = render_to_string('contact_form_email_template.html', {
                 'name': name,
                 'email': email,
                 'message': message,
-            }
-            html_message = render_to_string('contact_form_email_template.html', context)
+            })
             plain_message = strip_tags(html_message)
 
             subject = f"New Contact Form Submission from {name}"
@@ -102,7 +100,6 @@ def view_client_profile(request):
     if request.method == 'POST':
         new_first_name = request.POST.get('first_name')
         new_last_name = request.POST.get('last_name')
-        new_email = request.POST.get('email')
         new_phone_number = request.POST.get('phone_number')
         new_sex = request.POST.get('sex')
         new_current_address = request.POST.get('current_address')
@@ -111,15 +108,9 @@ def view_client_profile(request):
         new_password = request.POST.get('password')
         confirm_new_password = request.POST.get('confirm_password')
 
-        # Check if the new email is already taken by another user
-        if User.objects.filter(email=new_email).exclude(id=user.id).exists():
-            messages.error(request, 'Email is already registered.')
-            return redirect('client_profile')
-
         # Update user details
         user.first_name = new_first_name
         user.last_name = new_last_name
-        user.email = new_email
         user.phone_number = new_phone_number
         user.sex = new_sex
         user.current_address = new_current_address
@@ -240,12 +231,84 @@ def client_register(request):
 def verify_email(request, token):
     try:
         user = User.objects.get(verification_token=token)
-        user.verify_email()
-        messages.success(request, 'Your email has been verified. You can now log in.')
+
+        token_age = timezone.now() - user.password_reset_token_created
+        if token_age > timedelta(hours=24):
+            messages.error(request, 'Verification link has expired. Please register again.')
+            return redirect('client_register')
+
+        else:
+            user.email_verified = True
+            user.verification_token = None
+            user.verification_token_created = None
+            user.save()
+            messages.success(request, 'Your email has been verified. You can now log in.')
+            return redirect('client_login')
     except User.DoesNotExist:
         messages.error(request, 'Invalid verification token.')
+        return redirect('client_login')
 
-    return redirect('client_login')
+
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email)
+            # Generate a random token
+            token = get_random_string(length=32)
+            user.password_reset_token = token
+            user.password_reset_token_created = datetime.now()
+            user.save()
+
+            # Send password reset email
+            reset_link = request.build_absolute_uri(
+                reverse('reset_password', args=[token])
+            )
+
+            html_message = render_to_string('password_reset_email_template.html', {
+                'user': user,
+                'reset_link': reset_link,
+            })
+            plain_message = strip_tags(html_message)
+
+            send_mail(
+                subject='Reset Your Password - Jaylon Dental Clinic',
+                message=plain_message,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[user.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+
+            messages.success(request, 'Password reset instructions have been sent to your email.')
+            return redirect('client_login')
+        except User.DoesNotExist:
+            messages.error(request, 'No user with that email address exists.')
+
+    return render(request, 'forgot_password.html')
+
+
+def reset_password(request, token):
+    try:
+        user = User.objects.get(password_reset_token=token)
+        if request.method == 'POST':
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+
+            if new_password == confirm_password:
+                user.set_password(new_password)
+                user.password_reset_token = None
+                user.password_reset_token_created = None
+                user.save()
+                messages.success(request,
+                                 'Your password has been reset successfully. You can now log in.')
+                return redirect('client_login')
+            else:
+                messages.error(request, 'Passwords do not match.')
+        return render(request, 'reset_password.html')
+    except User.DoesNotExist:
+        messages.error(request, 'Invalid password reset token.')
+        return redirect('client_login')
 
 
 @login_required(login_url='client_login')

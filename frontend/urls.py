@@ -9,6 +9,8 @@ urlpatterns = [
     path('login/', client_login, name='client_login'),
     path('register/', client_register, name='client_register'),
     path('verify-email/<str:token>/', verify_email, name='verify_email'),
+    path('forgot-password/', forgot_password, name='forgot_password'),
+    path('reset-password/<str:token>/', reset_password, name='reset_password'),
     path('logout/', client_logout, name='client_logout'),
 
     path('get_available_time_slots/', get_available_time_slots, name='client_get_available_time_slots'),
