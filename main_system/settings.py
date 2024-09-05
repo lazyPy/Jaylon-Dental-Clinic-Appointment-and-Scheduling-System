@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
 from pathlib import Path
-import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -76,12 +75,15 @@ WSGI_APPLICATION = 'main_system.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-# Fetch the DATABASE_URL from environment variables
-DATABASE_URL = os.environ.get('POSTGRES_URL')
-
-# Configure the DATABASES setting using dj-database-url
 DATABASES = {
-    'default': dj_database_url.config(default=DATABASE_URL)
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'verceldb',
+        'USER': 'default',
+        'PASSWORD': 'lbCEqn5KGXD4',
+        'HOST': 'ep-quiet-sound-a1wv4pst-pooler.ap-southeast-1.aws.neon.tech',
+        'PORT': '5432',
+    }
 }
 
 # DATABASES = {
