@@ -2,12 +2,53 @@
 {% load static %}
 {% block content %}
 
+<nav id="navbar-example2" class="navbar navbar-expand-lg sticky-top bg-white px-3">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'client_dashboard' %}"><i class="fas fa-tooth mr-2 text-primary"></i> Jaylon Dental Clinic</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav nav-pills me-auto my-1">
+                <li class="nav-item">
+                    <a class="nav-link px-2" href="#scrollspyHome"><i class="fas fa-home"></i> Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-2" href="#scrollspyService"><i class="fas fa-tools"></i> Services</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-2" href="#scrollspyGallery"><i class="fas fa-images"></i> Gallery</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-2" href="#scrollspyContacts"><i class="fas fa-envelope"></i> Contacts</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav nav-pills">
+                {% if request.user.is_authenticated and not request.user.is_superuser %}
+                <li class="nav-item ms-auto">
+                    <a class="btn btn-outline-primary btn-sm me-2" href="{% url 'client_profile' %}"><i
+                            class="fas fa-user"></i> Profile</a>
+                    <a class="btn btn-outline-danger btn-sm" href="{% url 'client_logout' %}"><i
+                            class="fas fa-sign-out-alt"></i> Logout</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="btn btn-primary" href="{% url 'client_login' %}"><i class="fas fa-calendar-check"></i>
+                        BOOK NOW</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
 <div data-bs-spy="scroll" data-bs-target="#navbar-example2" data-bs-root-margin="0px 0px -40%"
      data-bs-smooth-scroll="true" class="container-fluid scrollspy-example bg-body-tertiary p-3 rounded-2" tabindex="0">
 
     <div id="scrollspyHome" class="mt-4" data-aos="fade-up">
         {% if request.user.is_authenticated and not request.user.is_superuser %}
-        <div class="row">
+        <div class="row gy-5">
             <div class="col-md-6">
                 <h3><i class="fas fa-calendar-plus text-primary"></i> Book an Appointment</h3>
                 <form method="post" id="appointmentForm">
@@ -91,8 +132,10 @@
             <div class="col-md-4 col-lg-3 mb-4" data-aos="zoom-in"
                  data-aos-delay="{{ forloop.counter0|divisibleby:4|yesno:'0,100,200,300' }}">
                 <div class="card h-100">
-                    <img src="{{ service.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;"
-                         alt="{{ service.title }}">
+                    <a href="{{ service.image.url }}">
+                        <img src="{{ service.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;"
+                             alt="{{ service.title }}">
+                    </a>
                     <div class="card-body">
                         <h5 class="card-title">{{ service.title }}</h5>
                         <p style="max-height: 75px; overflow-y: auto; margin: 0;" class="card-text">
@@ -112,10 +155,12 @@
             {% for image in images %}
             <div class="col-md-4 col-lg-3 mb-4" data-aos="flip-left"
                  data-aos-delay="{{ forloop.counter0|divisibleby:4|yesno:'0,100,200,300' }}">
-                <div class="card">
-                    <img src="{{ image.image.url }}" class="img-thumbnail" style="height: 300px; object-fit: cover;"
-                         alt="Clinic Image">
-                </div>
+                <a href="{{ image.image.url }}">
+                    <div class="card">
+                        <img src="{{ image.image.url }}" class="img-thumbnail" style="height: 300px; object-fit: cover;"
+                             alt="Clinic Image {{ forloop.counter }}">
+                    </div>
+                </a>
             </div>
             {% endfor %}
         </div>
@@ -124,8 +169,8 @@
     <div id="scrollspyContacts" class="mt-4" data-aos="fade-up">
         <h3 class="mb-4" data-aos="fade-right"><i class="fas fa-envelope text-primary"></i> Contact Us</h3>
         <p class="lead" data-aos="fade-left">We're here to answer your questions and address your concerns.</p>
-        <div class="row gy-4">
-            <div class="col-md-6" data-aos="slide-right">
+        <div class="row gy-5">
+            <div class="col-md-6" data-aos="fade-up">
                 <form method="post" id="contactForm">
                     {% csrf_token %}
                     <div class="mb-3">
@@ -146,7 +191,7 @@
                     </div>
                 </form>
             </div>
-            <div class="col-md-5 offset-md-1" data-aos="slide-left">
+            <div class="col-md-5 offset-md-1" data-aos="fade-up">
                 <h4><i class="fas fa-info-circle"></i> Clinic Information</h4>
                 <p><i class="fas fa-map-marker-alt"></i> <strong>Address:</strong> Dayao St, Kidapawan City, Cotabato
                 </p>
@@ -174,7 +219,7 @@
     </div>
 </div>
 
-<footer class="bg-secondary text-light py-3" data-aos="fade-up">
+<footer class="bg-secondary text-light py-3" data-aos="fade-down">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-8 text-center">

@@ -2,10 +2,49 @@
 {% load static %}
 {% block content %}
 
+<nav id="navbar-example2" class="navbar navbar-expand-lg sticky-top bg-white px-3">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'client_dashboard' %}"><i class="fas fa-tooth mr-2 text-primary"></i> Jaylon Dental Clinic</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav nav-pills me-auto">
+                <li class="nav-item">
+                    <a class="nav-link px-2" href="{% url 'client_dashboard' %}#scrollspyHome"><i class="fas fa-home"></i> Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-2" href="{% url 'client_dashboard' %}#scrollspyService"><i class="fas fa-tools"></i> Services</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-2" href="{% url 'client_dashboard' %}#scrollspyGallery"><i class="fas fa-images"></i> Gallery</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-2" href="{% url 'client_dashboard' %}#scrollspyContacts"><i class="fas fa-envelope"></i> Contacts</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav nav-pills">
+                {% if request.user.is_authenticated and not request.user.is_superuser %}
+                <li class="nav-item ms-auto">
+                    <a class="btn btn-outline-primary btn-sm me-2" href="{% url 'client_profile' %}"><i
+                            class="fas fa-user"></i> Profile</a>
+                    <a class="btn btn-outline-danger btn-sm" href="{% url 'client_logout' %}"><i
+                            class="fas fa-sign-out-alt"></i> Logout</a>
+                </li>
+                {% else %}
+                <li class="nav-item">
+                    <a class="btn btn-primary" href="{% url 'client_login' %}"><i class="fas fa-calendar-check"></i>
+                        BOOK NOW</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card">
+    <div class="card" data-aos="zoom-in-down">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0 py-2">Update Profile</h4>
                 </div>
@@ -74,8 +113,6 @@
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
 </div>
 
 {% endblock %}

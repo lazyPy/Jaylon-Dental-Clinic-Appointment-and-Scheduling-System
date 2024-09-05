@@ -77,8 +77,10 @@
                     <div class="col-xs-6 col-sm-6 col-md-4 col-lg-3">
                         <div class="thumbnail"
                              style="width: 100%; height: 100%; overflow: hidden; position: relative;">
-                            <img src="{{ service.image.url }}" alt="{{ service.title }}"
-                                 style="width: 500px; height: 200px; object-fit: cover;">
+                            <a href="{{ service.image.url }}">
+                                <img src="{{ service.image.url }}" alt="{{ service.title }}"
+                                     style="width: 500px; height: 200px; object-fit: cover;">
+                            </a>
                             <div class="caption" style="padding: 5px;">
                                 <h3>{{ service.title }}</h3>
                                 <p style="max-height: 75px; overflow-y: auto; margin: 0;">
@@ -148,7 +150,7 @@
                                         <div class="form-group">
                                             <label>Current Image</label>
                                             <div class="form-line">
-                                                <img src="{{ service.image.url }}" alt="Current Image"
+                                                <img src="{{ service.image.url }}" alt="{{ service.title }}"
                                                      style="width: 100%; height: 200px; object-fit: cover;">
                                             </div>
                                         </div>

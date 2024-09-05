@@ -28,6 +28,7 @@
 
     <!-- Toastr CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
     <!-- DataTable CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 
@@ -102,55 +103,22 @@
             transition-duration: 800ms;
         }
 
-        @media (max-width: 768px) {
-            #scrollspyHome, #scrollspyService, #scrollspyGallery, #scrollspyContacts {
-                padding: 2rem;
-            }
+        [data-aos="fade-right"] {
+            transform: translateX(-50px);
         }
+
+        [data-aos="fade-left"] {
+            transform: translateX(50px);
+        }
+
+        [data-aos="fade-right"].aos-animate,
+        [data-aos="fade-left"].aos-animate {
+            transform: translateX(0);
+        }
+
     </style>
 </head>
 <body>
-
-<nav id="navbar-example2" class="navbar navbar-expand-lg sticky-top bg-white px-3">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'client_dashboard' %}"><i class="fas fa-tooth mr-2 text-primary"></i> Jaylon Dental Clinic</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav nav-pills me-auto">
-                <li class="nav-item">
-                    <a class="nav-link px-2" href="#scrollspyHome"><i class="fas fa-home"></i> Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link px-2" href="#scrollspyService"><i class="fas fa-tools"></i> Services</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link px-2" href="#scrollspyGallery"><i class="fas fa-images"></i> Gallery</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link px-2" href="#scrollspyContacts"><i class="fas fa-envelope"></i> Contacts</a>
-                </li>
-            </ul>
-            <ul class="navbar-nav nav-pills">
-                {% if request.user.is_authenticated and not request.user.is_superuser %}
-                <li class="nav-item ms-auto">
-                    <a class="btn btn-outline-primary btn-sm me-2" href="{% url 'client_profile' %}"><i
-                            class="fas fa-user"></i> Profile</a>
-                    <a class="btn btn-outline-danger btn-sm" href="{% url 'client_logout' %}"><i
-                            class="fas fa-sign-out-alt"></i> Logout</a>
-                </li>
-                {% else %}
-                <li class="nav-item">
-                    <a class="btn btn-primary" href="{% url 'client_login' %}"><i class="fas fa-calendar-check"></i>
-                        BOOK NOW</a>
-                </li>
-                {% endif %}
-            </ul>
-        </div>
-    </div>
-</nav>
 
 {% block content %}{% endblock %}
 
@@ -184,8 +152,7 @@
 <script>
     AOS.init({
         duration: 1000,
-        once: true,
-        offset: 100
+        offset: 100,
     });
 </script>
 
