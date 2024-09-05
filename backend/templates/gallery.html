@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "backend_base.html" %}
 {% load static %}
 {% block content %}
 
@@ -25,9 +25,27 @@
                     <div class="col-xs-6 col-sm-6 col-md-4 col-lg-3">
                         <div class="image-container">
                             <img class="img-responsive thumbnail" src="{{ image.image.url }}" alt="Image">
-                            <a href="{% url 'delete_image' image.id %}" class="badge-delete-button">
+                            <button type="button" class="badge-delete-button" data-toggle="modal" data-target="#deleteModal{{ image.id }}">
                                 <i class="material-icons">close</i>
-                            </a>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Delete Confirmation Modal -->
+                    <div class="modal fade" id="deleteModal{{ image.id }}" tabindex="-1" role="dialog">
+                        <div class="modal-dialog modal-sm" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header bg-red">
+                                    <h4 class="modal-title p-b-10" id="deleteModalLabel">DELETE IMAGE</h4>
+                                </div>
+                                <div class="modal-body">
+                                    Are you sure you want to <span class="font-bold">delete</span> this image?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn bg-grey waves-effect" data-dismiss="modal">CANCEL</button>
+                                    <a href="{% url 'delete_image' image.id %}" class="btn btn-danger waves-effect">DELETE</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% empty %}

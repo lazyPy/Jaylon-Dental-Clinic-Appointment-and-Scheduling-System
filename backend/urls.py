@@ -14,6 +14,9 @@ urlpatterns = [
     path('user/<int:user_id>/', user_details, name='user_details'),
 
     path('delete_appointment/<int:appointment_id>/', delete_appointment, name='delete_appointment'),
-    path('update_appointment_status/<int:appointment_id>/', update_appointment_status, name='update_appointment_status'),
+    path('update_appointment_status/<int:appointment_id>/', update_appointment_status,
+         name='update_appointment_status'),
 
-    ]
+    path('get_available_time_slots/', get_available_time_slots, name='get_available_time_slots'),
+
+]

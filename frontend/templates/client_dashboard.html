@@ -1,0 +1,202 @@
+{% extends "frontend_base.html" %}
+{% load static %}
+{% block content %}
+
+<div data-bs-spy="scroll" data-bs-target="#navbar-example2" data-bs-root-margin="0px 0px -40%"
+     data-bs-smooth-scroll="true" class="container-fluid scrollspy-example bg-body-tertiary p-3 rounded-2" tabindex="0">
+
+    <div id="scrollspyHome" class="mt-4" data-aos="fade-up">
+        {% if request.user.is_authenticated and not request.user.is_superuser %}
+        <div class="row">
+            <div class="col-md-6">
+                <h3><i class="fas fa-calendar-plus text-primary"></i> Book an Appointment</h3>
+                <form method="post" id="appointmentForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="serviceSelect" class="form-label">Service</label>
+                        <select class="form-select" name="service" id="serviceSelect" required>
+                            <option value="">--Select Service--</option>
+                            {% for service in services %}
+                                <option value="{{ service.id }}">{{ service.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="dateInput" class="form-label">Preferred Date</label>
+                        <input type="date" class="form-control" name="date" id="dateInput" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="timeSlotSelect" class="form-label">Preferred Time</label>
+                        <select class="form-select" name="time_slot" id="timeSlotSelect" required>
+                            <option value="">--Select Time--</option>
+                        </select>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Book Appointment
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <h3><i class="fas fa-history text-primary"></i> Appointment History</h3>
+                <div class="table-responsive">
+                    <table id="appointmentHistoryTable" class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Service</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td>{{ appointment.service }}</td>
+                            <td>{{ appointment.date }}</td>
+                            <td>{{ appointment.start_time }} - {{ appointment.end_time }}</td>
+                            <td>
+                                {% if appointment.status == 'Approved' %}
+                                <span class="badge bg-success"><i class="fas fa-check-circle"></i> {{ appointment.status }}</span>
+                                {% elif appointment.status == 'Pending' %}
+                                <span class="badge bg-warning"><i
+                                        class="fas fa-clock"></i> {{ appointment.status }}</span>
+                                {% else %}
+                                <span class="badge bg-danger"><i class="fas fa-times-circle"></i> {{ appointment.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <h1 class="text-center mb-4">Welcome to Jaylon Dental Clinic</h1>
+        <p class="lead text-center">Your journey to a brighter smile starts here!</p>
+        <div class="text-center">
+            <a href="{% url 'client_login' %}" class="btn btn-primary btn-lg"><i class="fas fa-calendar-check"></i> Book
+                Your Appointment Now</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div id="scrollspyService" class="mt-4" data-aos="fade-up">
+        <h3 class="mb-4" data-aos="fade-right"><i class="fas fa-tools text-primary"></i> Our Services</h3>
+        <p class="lead" data-aos="fade-left">Discover the range of dental services we offer to keep your smile healthy
+            and beautiful.</p>
+        <div class="row">
+            {% for service in services %}
+            <div class="col-md-4 col-lg-3 mb-4" data-aos="zoom-in"
+                 data-aos-delay="{{ forloop.counter0|divisibleby:4|yesno:'0,100,200,300' }}">
+                <div class="card h-100">
+                    <img src="{{ service.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;"
+                         alt="{{ service.title }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ service.title }}</h5>
+                        <p style="max-height: 75px; overflow-y: auto; margin: 0;" class="card-text">
+                            {{ service.description }}</p>
+                        <p class="mt-2"><i class="far fa-clock"></i> Duration: {{ service.duration }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="scrollspyGallery" class="mt-4" data-aos="fade-up">
+        <h3 class="mb-4" data-aos="fade-right"><i class="fas fa-images text-primary"></i> Clinic Gallery</h3>
+        <p class="lead" data-aos="fade-left">Take a virtual tour of our state-of-the-art facilities.</p>
+        <div class="row">
+            {% for image in images %}
+            <div class="col-md-4 col-lg-3 mb-4" data-aos="flip-left"
+                 data-aos-delay="{{ forloop.counter0|divisibleby:4|yesno:'0,100,200,300' }}">
+                <div class="card">
+                    <img src="{{ image.image.url }}" class="img-thumbnail" style="height: 300px; object-fit: cover;"
+                         alt="Clinic Image">
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="scrollspyContacts" class="mt-4" data-aos="fade-up">
+        <h3 class="mb-4" data-aos="fade-right"><i class="fas fa-envelope text-primary"></i> Contact Us</h3>
+        <p class="lead" data-aos="fade-left">We're here to answer your questions and address your concerns.</p>
+        <div class="row gy-4">
+            <div class="col-md-6" data-aos="slide-right">
+                <form method="post" id="contactForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="contactName" class="form-label">Name</label>
+                        <input type="text" class="form-control" id="contactName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="contactEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="contactEmail" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="contactMessage" class="form-label">Message</label>
+                        <textarea class="form-control" id="contactMessage" rows="4" name="message" required></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-5 offset-md-1" data-aos="slide-left">
+                <h4><i class="fas fa-info-circle"></i> Clinic Information</h4>
+                <p><i class="fas fa-map-marker-alt"></i> <strong>Address:</strong> Dayao St, Kidapawan City, Cotabato
+                </p>
+                <p><i class="fas fa-phone"></i> <strong>Phone:</strong> 09876543210</p>
+                <p><i class="fas fa-envelope"></i> <strong>Email:</strong> info@jaylondentalclinic.com</p>
+                <h4 class="mt-4"><i class="far fa-clock"></i> Office Hours</h4>
+                <p>Monday - Saturday: 8:30 AM - 4:00 PM</p>
+                <p>Sunday: 9:00 AM - 12:00 PM</p>
+                <div class="mt-4">
+                    <h4><i class="fas fa-ambulance"></i> Emergency Dental Care</h4>
+                    <p>For after-hours dental emergencies, please call our 24/7 contact: <strong>09876543210</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12" data-aos="zoom-in">
+                <h4><i class="fas fa-map-marked-alt"></i> Find Us</h4>
+                <div class="embed-responsive embed-responsive-16by9">
+                    <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3959.967304180738!2d125.08718601145742!3d7.013128192959139!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x32f8f9e289b147af%3A0xa6fd91898c8910a0!2sJaylon%20Dental%20group!5e0!3m2!1sen!2sph!4v1725349059605!5m2!1sen!2sph"
+                            width="100%" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-secondary text-light py-3" data-aos="fade-up">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <h5 class="mb-4">Connect With Us</h5>
+                <div class="d-flex justify-content-center">
+                    <a href="#" class="social-icon mx-3">
+                        <i class="fab fa-facebook fa-2x"></i>
+                    </a>
+                    <a href="#" class="social-icon mx-3">
+                        <i class="fab fa-twitter fa-2x"></i>
+                    </a>
+                    <a href="#" class="social-icon mx-3">
+                        <i class="fab fa-instagram fa-2x"></i>
+                    </a>
+                    <a href="#" class="social-icon mx-3">
+                        <i class="fab fa-linkedin fa-2x"></i>
+                    </a>
+                </div>
+                <p class="mt-2">&copy; 2024 Jaylon Dental Clinic. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+{% endblock %}

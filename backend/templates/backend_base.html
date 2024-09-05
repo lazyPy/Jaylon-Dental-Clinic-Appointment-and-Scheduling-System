@@ -46,6 +46,9 @@
     <!-- AdminBSB Themes. You can choose a theme from css/themes instead of get all themes -->
     <link href="{% static 'css/themes/all-themes.css' %}" rel="stylesheet"/>
 
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
     <style>
         .image-container {
             position: relative;
@@ -74,8 +77,7 @@
         }
 
         .badge-delete-button:hover {
-            background: darkred; /* Darker red background on hover */
-            transform: scale(1.1); /* Slightly increase the size of the button */
+            text-decoration: none;
         }
 
         .img-responsive {
@@ -119,7 +121,7 @@
             <a href="javascript:void(0);" class="navbar-toggle collapsed" data-toggle="collapse"
                data-target="#navbar-collapse" aria-expanded="false"></a>
             <a href="javascript:void(0);" class="bars"></a>
-            <a class="navbar-brand" href="index.html">ADMIN - JAYLON DENTAL CLINIC SCHEDULING AND APPOINTMENT SYSTEM</a>
+            <a class="navbar-brand" href="javascript:void(0);">ADMIN - JAYLON DENTAL CLINIC SCHEDULING AND APPOINTMENT SYSTEM</a>
         </div>
         <div class="collapse navbar-collapse" id="navbar-collapse">
             <ul class="nav navbar-nav navbar-right">
@@ -249,138 +251,265 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- Toastr JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
 <script>
-// Line Chart for Monthly Appointments
-const ctx = document.getElementById('monthlyAppointmentsChart').getContext('2d');
+// Responsive font size calculation
+function calculateFontSize() {
+    return window.innerWidth < 768 ? 10 : 12;
+}
 
-// Create a gradient for the background
-const gradientFill = ctx.createLinearGradient(0, 0, 0, 400);
-gradientFill.addColorStop(0, 'rgba(75, 192, 192, 0.4)');
-gradientFill.addColorStop(1, 'rgba(153, 102, 255, 0.4)');
+// Common chart options
+const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+        legend: {
+            display: false
+        },
+        tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleFont: {
+                size: 14,
+                weight: 'bold'
+            },
+            bodyFont: {
+                size: 12
+            },
+            padding: 10,
+            cornerRadius: 4,
+            displayColors: false
+        }
+    },
+    scales: {
+        x: {
+            grid: {
+                display: false
+            },
+            ticks: {
+                font: {
+                    size: calculateFontSize()
+                },
+                color: '#666'
+            }
+        },
+        y: {
+            beginAtZero: true,
+            grid: {
+                color: 'rgba(0, 0, 0, 0.1)',
+                drawBorder: false
+            },
+            ticks: {
+                font: {
+                    size: calculateFontSize()
+                },
+                color: '#666',
+                padding: 10
+            },
+            title: {
+                display: true,
+                text: 'Number of Appointments',
+                color: '#333',
+                font: {
+                    size: calculateFontSize() + 2,
+                    weight: 'bold'
+                }
+            }
+        }
+    }
+};
 
-const monthlyAppointmentsChart = new Chart(ctx, {
+// Monthly Appointments Chart
+const ctxMonthly = document.getElementById('monthlyAppointmentsChart').getContext('2d');
+const gradientFill = ctxMonthly.createLinearGradient(0, 0, 0, 400);
+gradientFill.addColorStop(0, 'rgba(75, 192, 192, 0.6)');
+gradientFill.addColorStop(1, 'rgba(75, 192, 192, 0.1)');
+
+const monthlyAppointmentsChart = new Chart(ctxMonthly, {
     type: 'line',
     data: {
-        labels: {{ months|safe }},  // Use month names including year
+        labels: {{ months|safe }},
         datasets: [{
             label: 'Monthly Appointments',
-            data: {{ monthly_totals|safe }},  // Appointment counts per month
+            data: {{ monthly_totals|safe }},
             backgroundColor: gradientFill,
             borderColor: 'rgba(75, 192, 192, 1)',
             borderWidth: 2,
             pointBackgroundColor: 'rgba(75, 192, 192, 1)',
             pointBorderColor: '#fff',
             pointBorderWidth: 2,
-            pointRadius: 5,
+            pointRadius: 4,
+            pointHoverRadius: 6,
             fill: true,
-            tension: 0.3  // Smooth the lines
+            tension: 0.4
         }]
     },
     options: {
-        responsive: true,
+        ...commonOptions,
         plugins: {
-            legend: {
-                display: false
-            },
+            ...commonOptions.plugins,
             title: {
-                display: false
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(tooltipItem) {
-                        return `Appointments: ${tooltipItem.raw}`;
-                    }
-                }
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Number of Appointments',
-                    color: '#333',
-                    font: {
-                        size: 14
-                    }
+                display: true,
+                text: 'Monthly Appointment Analysis',
+                font: {
+                    size: calculateFontSize() + 4,
+                    weight: 'bold'
                 },
-                ticks: {
-                    color: '#333'
+                padding: {
+                    top: 10,
+                    bottom: 30
                 }
             }
         }
     }
 });
 
+// Daily Appointments Chart
+const ctxDaily = document.getElementById('dailyAppointmentsChart').getContext('2d');
+const dailyGradient = ctxDaily.createLinearGradient(0, 0, 0, 400);
+dailyGradient.addColorStop(0, 'rgba(54, 162, 235, 0.8)');
+dailyGradient.addColorStop(1, 'rgba(54, 162, 235, 0.2)');
+
+const dailyAppointmentsChart = new Chart(ctxDaily, {
+    type: 'bar',
+    data: {
+        labels: {{ days|safe }},
+        datasets: [{
+            label: 'Daily Appointments',
+            data: {{ daily_totals|safe }},
+            backgroundColor: dailyGradient,
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1,
+            borderRadius: 4,
+            barThickness: 'flex',
+            maxBarThickness: 30
+        }]
+    },
+    options: {
+        ...commonOptions,
+        plugins: {
+            ...commonOptions.plugins,
+            title: {
+                display: true,
+                text: 'Daily Appointment Analysis',
+                font: {
+                    size: calculateFontSize() + 4,
+                    weight: 'bold'
+                },
+                padding: {
+                    top: 10,
+                    bottom: 30
+                }
+            }
+        }
+    }
+});
+
+// Resize listener for responsiveness
+window.addEventListener('resize', () => {
+    const newFontSize = calculateFontSize();
+    [monthlyAppointmentsChart, dailyAppointmentsChart].forEach(chart => {
+        chart.options.scales.x.ticks.font.size = newFontSize;
+        chart.options.scales.y.ticks.font.size = newFontSize;
+        chart.options.scales.y.title.font.size = newFontSize + 2;
+        chart.options.plugins.title.font.size = newFontSize + 4;
+        chart.update();
+    });
+});
 </script>
 
 <script>
-// Bar Chart for Last 7 Days Appointments
-const ctxBar = document.getElementById('dailyAppointmentsChart').getContext('2d');
-
-// Define an array of colors for the bars
-const barColors = [
-    'rgba(255, 99, 132, 0.6)', // Red
-    'rgba(54, 162, 235, 0.6)', // Blue
-    'rgba(255, 206, 86, 0.6)', // Yellow
-    'rgba(75, 192, 192, 0.6)', // Teal
-    'rgba(153, 102, 255, 0.6)', // Purple
-    'rgba(255, 159, 64, 0.6)', // Orange
-    'rgba(255, 99, 132, 0.6)'  // Red (repeated for consistency)
-];
-
-const dailyAppointmentsChart = new Chart(ctxBar, {
-    type: 'bar',
-    data: {
-        labels: {{ days|safe }},  // Day names for the last 7 days
-        datasets: [{
-            label: 'Appointments in Last 7 Days',
-            data: {{ daily_totals|safe }},  // Appointment counts per day
-            backgroundColor: barColors,  // Apply the array of colors
-            borderColor: barColors.map(color => color.replace('0.6', '1')), // Adjust border color
-            borderWidth: 2,
-            barThickness: 30,
-            borderRadius: 5
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                display: false
-            },
-            title: {
-                display: false
-            },
-            tooltip: {
-                callbacks: {
-                    label: function(tooltipItem) {
-                        return `Appointments: ${tooltipItem.raw}`;
-                    }
-                }
-            }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                title: {
-                    display: true,
-                    text: 'Number of Appointments',
-                    color: '#333',
-                    font: {
-                        size: 14
-                    }
-                },
-                ticks: {
-                    color: '#333'
-                }
-            }
-        }
+    // Toastr configuration
+    toastr.options = {
+      "closeButton": true,
+      "debug": false,
+      "newestOnTop": true,
+      "progressBar": true,
+      "positionClass": "toast-top-right",
+      "preventDuplicates": false,
+      "onclick": null,
+      "showDuration": "300",
+      "hideDuration": "1000",
+      "timeOut": "5000",
+      "extendedTimeOut": "1000",
+      "showEasing": "swing",
+      "hideEasing": "linear",
+      "showMethod": "fadeIn",
+      "hideMethod": "fadeOut"
     }
-});
 
+    // Check for success message in Django messages
+    {% if messages %}
+        {% for message in messages %}
+            {% if message.tags == 'success' %}
+                toastr.success("{{ message }}");
+            {% elif message.tags == 'error' %}
+                toastr.error("{{ message }}");
+            {% endif %}
+        {% endfor %}
+    {% endif %}
 </script>
 
+<script>
+    $(document).ready(function() {
+        function updateTimeSlots(data) {
+            var timeSlotSelect = $('#timeSlotSelect');
+            timeSlotSelect.empty();
+            timeSlotSelect.append($('<option></option>').attr('value', '').text('--Select Time--'));
+            if (data.available_slots && data.available_slots.length > 0) {
+                $.each(data.available_slots, function(index, slot) {
+                    var optionText = slot.start + ' - ' + slot.end;
+                    console.log('Adding option:', optionText);
+                    timeSlotSelect.append($('<option></option>').attr('value', optionText).text(optionText));
+                });
+            } else {
+                console.log('No available slots');
+                timeSlotSelect.append($('<option></option>').attr('value', '').text('No available slots'));
+            }
 
+            // Try to refresh the enhanced select plugin
+            try {
+                timeSlotSelect.selectpicker('refresh');
+            } catch (e) {
+                console.log('SelectPicker not available, falling back to native select');
+                // If the plugin is not available or throws an error, show the native select
+                timeSlotSelect.show();
+            }
+
+            console.log('Time slot options:', timeSlotSelect.html());
+        }
+
+        $('#serviceSelect, #dateInput').change(function() {
+            var serviceId = $('#serviceSelect').val();
+            var date = $('#dateInput').val();
+
+            console.log('Service ID:', serviceId);
+            console.log('Date:', date);
+
+            if (serviceId && date) {
+                $.ajax({
+                    url: '{% url "get_available_time_slots" %}',
+                    data: {
+                        'service_id': serviceId,
+                        'date': date
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        console.log('Received data:', data);
+                        updateTimeSlots(data);
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.error('AJAX error:', textStatus, errorThrown);
+                        alert('Error fetching time slots. Please try again.');
+                    }
+                });
+            } else {
+                console.log('Service ID or Date not selected');
+                updateTimeSlots({available_slots: []});
+            }
+        });
+    });
+</script>
 </body>
 </html>

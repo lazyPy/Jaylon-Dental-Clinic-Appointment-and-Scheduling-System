@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import BaseUserManager
+from django.utils.crypto import get_random_string
 
 
 class CustomUserManager(BaseUserManager):
@@ -39,11 +40,22 @@ class User(AbstractUser):
     current_address = models.TextField(blank=True)
     birthday = models.DateField(null=True, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
+    email_verified = models.BooleanField(default=False)
+    verification_token = models.CharField(max_length=100, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
 
     objects = CustomUserManager()  # Use the custom manager
+
+    def generate_verification_token(self):
+        self.verification_token = get_random_string(length=32)
+        self.save()
+
+    def verify_email(self):
+        self.email_verified = True
+        self.verification_token = ''
+        self.save()
 
     def __str__(self):
         return f'{self.first_name} {self.last_name}'
@@ -74,8 +86,9 @@ class Appointment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     date = models.DateField()
-    time = models.TimeField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
 
     def __str__(self):
-        return f"{self.user.first_name} {self.user.last_name} - {self.service.title} on {self.date} at {self.time}"
+        return f"{self.user.first_name} {self.user.last_name} - {self.service.title} on {self.date} at {self.start_time}"

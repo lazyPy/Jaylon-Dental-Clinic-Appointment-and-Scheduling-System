@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "backend_base.html" %}
 {% load static %}
 {% block content %}
 
@@ -189,12 +189,32 @@
                                     <a href="{% url 'user_details' user.id %}" class="btn bg-cyan btn-xs" style="margin: 2px;">
                                         <i class="material-icons">visibility</i>
                                     </a>
-                                    <a href="{% url 'delete_user' user.id %}" class="btn btn-danger btn-xs" style="margin: 2px;">
+                                    <button type="button" class="btn btn-danger btn-xs" style="margin: 2px;"
+                                            data-toggle="modal" data-target="#deleteModal{{ user.id }}">
                                         <i class="material-icons">delete</i>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
+
+                        <!-- Delete Confirmation Modal -->
+                        <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1" role="dialog">
+                            <div class="modal-dialog modal-sm" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-red">
+                                        <h4 class="modal-title p-b-10" id="deleteModalLabel">DELETE USER</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        Are you sure you want to delete this user <span class="font-bold">{{ user.first_name }} {{ user.last_name }}</span>?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn bg-grey waves-effect" data-dismiss="modal">CANCEL</button>
+                                        <a href="{% url 'delete_user' user.id %}" class="btn btn-danger waves-effect">DELETE</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         {% endfor %}
                         </tbody>
                     </table>

@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "backend_base.html" %}
 {% load static %}
 {% block content %}
 
@@ -9,10 +9,29 @@
         <div class="card">
             <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
                 <h2>ACCOUNT DETAILS for {{ user.first_name }} {{ user.last_name }}</h2>
-                <a href="{% url 'delete_user' user.id %}" class="btn bg-cyan btn-sm waves-effect">
+                <button type="button" class="btn btn-danger btn-sm waves-effect" data-toggle="modal" data-target="#deleteUserModal">
                     <i class="material-icons">delete</i><span>DELETE ACCOUNT</span>
-                </a>
+                </button>
             </div>
+
+            <!-- Delete Confirmation Modal -->
+            <div class="modal fade" id="deleteUserModal" tabindex="-1" role="dialog">
+                <div class="modal-dialog modal-sm" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header bg-red">
+                            <h4 class="modal-title p-b-10" id="deleteUserModalLabel">DELETE USER</h4>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to delete this user <span class="font-bold">{{ user.first_name }} {{ user.last_name }}</span>?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn bg-grey waves-effect" data-dismiss="modal">CANCEL</button>
+                            <a href="{% url 'delete_user' user.id %}" class="btn btn-danger waves-effect">DELETE</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="body">
                 <div class="row clearfix">
                     <div class="col-sm-12 col-md-6">
@@ -180,47 +199,37 @@
                                                 {% csrf_token %}
                                                 <div class="modal-body" style="padding-bottom: 0px;">
 
-                                                    <!-- Form fields -->
-                                                    <label for="name">Name</label>
+                                                    <label for="user">User</label>
                                                     <div class="form-group">
                                                         <div class="form-line">
-                                                            <input id="name" class="form-control" value="{{ user }}" disabled>
+                                                            <input type="text" class="form-control" value="{{ user }}" id="user" disabled>
                                                         </div>
                                                     </div>
-
-                                                    <label for="service">Service</label>
+                                                    <label for="serviceSelect">Service</label>
                                                     <div class="form-group">
-                                                        <select id="service" name="service" class="form-control show-tick"
-                                                                required>
-                                                            <option value="">---Select Service---</option>
+                                                        <select class="form-control show-tick" name="service" id="serviceSelect" required>
+                                                            <option value="">--Select Service--</option>
                                                             {% for service in services %}
-                                                            <option value="{{ service.id }}">{{ service.title }}</option>
+                                                                <option value="{{ service.id }}">{{ service.title }}</option>
                                                             {% endfor %}
                                                         </select>
                                                     </div>
-
-                                                    <label for="date">Date</label>
+                                                    <label for="dateInput">Date</label>
                                                     <div class="form-group">
                                                         <div class="form-line">
-                                                            <input type="date" id="date" name="date"
-                                                                   class="form-control" required>
+                                                            <input type="date" class="form-control" name="date" id="dateInput" required>
                                                         </div>
                                                     </div>
-
-                                                    <label for="time">Time</label>
+                                                    <label for="timeSlotSelect">Time</label>
                                                     <div class="form-group">
-                                                        <div class="form-line">
-                                                            <input type="time" id="time" name="time"
-                                                                   class="form-control"
-                                                                   required>
-                                                        </div>
+                                                        <select class="form-control show-tick" name="time_slot" id="timeSlotSelect" required>
+                                                            <option value="">--Select Time--</option>
+                                                        </select>
                                                     </div>
-
                                                     <label for="status">Status</label>
                                                     <div class="form-group">
-                                                        <select id="status" name="status" class="form-control show-tick"
-                                                                required>
-                                                            <option value="">---Select Status---</option>
+                                                        <select class="form-control show-tick" name="status" id="status" required>
+                                                            <option value="">--Select Status--</option>
                                                             <option value="Pending">Pending</option>
                                                             <option value="Approved">Approved</option>
                                                             <option value="Cancelled">Cancelled</option>
@@ -256,7 +265,7 @@
                                         <tr>
                                             <td>{{ appointment.service.title }}</td>
                                             <td>{{ appointment.date }}</td>
-                                            <td>{{ appointment.time }}</td>
+                                            <td>{{ appointment.start_time }} - {{ appointment.end_time }}</td>
                                             <td>
                                                 <form method="POST"
                                                       action="{% url 'update_appointment_status' appointment.id %}"
@@ -273,12 +282,30 @@
                                                 </form>
                                             </td>
                                             <td>
-                                                <a href="{% url 'delete_appointment' appointment.id %}"
-                                                   class="btn btn-danger btn-xs">
+                                                <button type="button" class="btn btn-danger btn-xs" data-toggle="modal" data-target="#deleteModal{{ appointment.id }}">
                                                     <i class="material-icons">delete</i>
-                                                </a>
+                                                </button>
                                             </td>
                                         </tr>
+
+                                        <!-- Delete Confirmation Modal -->
+                                        <div class="modal fade" id="deleteModal{{ appointment.id }}" tabindex="-1" role="dialog">
+                                            <div class="modal-dialog modal-sm" role="document">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-red">
+                                                        <h4 class="modal-title p-b-10" id="deleteModalLabel">DELETE APPOINTMENT</h4>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        Are you sure you want to delete this appointment for <span class="font-bold">{{ appointment.user.first_name }} {{ appointment.user.last_name }}</span>?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn bg-grey waves-effect" data-dismiss="modal">CANCEL</button>
+                                                        <a href="{% url 'delete_appointment' appointment.id %}" class="btn btn-danger waves-effect">DELETE</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         {% endfor %}
                                         </tbody>
                                     </table>
