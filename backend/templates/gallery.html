@@ -24,11 +24,11 @@
                     {% for image in images %}
                     <div class="col-xs-6 col-sm-6 col-md-4 col-lg-3">
                         <div class="image-container">
+                            <button type="button" class="badge-delete-button" data-toggle="modal" data-target="#deleteModal{{ image.id }}">
+                                <i class="material-icons">close</i>
+                            </button>
                             <a href="{{ image.image.url }}">
                                 <img class="img-responsive thumbnail" src="{{ image.image.url }}" alt="Clinic Image {{ forloop.counter }}">
-                                <button type="button" class="badge-delete-button" data-toggle="modal" data-target="#deleteModal{{ image.id }}">
-                                    <i class="material-icons">close</i>
-                                </button>
                             </a>
                         </div>
                     </div>

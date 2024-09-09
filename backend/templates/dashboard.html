@@ -148,6 +148,7 @@
                                 <th>Age</th>
                                 <th>Phone Number</th>
                                 <th>Status</th>
+                                <th>Attended</th>
                                 <th>Action</th>
                             </tr>
                             </thead>
@@ -174,6 +175,22 @@
                                             <option value="Cancelled" {% if appointment.status == 'Cancelled' %}
                                             selected{% endif %}>Cancelled</option>
                                         </select>
+                                    </form>
+                                </td>
+                                <td class="text-center">
+                                    <form method="post" action="{% url 'update_appointment_attendance' appointment.id %}">
+                                    {% csrf_token %}
+                                    <div class="form-check">
+                                        <input type="checkbox"
+                                               name="attended"
+                                               id="check-in-{{ appointment.id }}"
+                                               class="filled-in"
+                                               {% if appointment.attended %}checked{% endif %}
+                                               onchange="this.form.submit()"
+                                               {% if appointment.status != 'Approved' %}disabled{% endif %}>
+                                        <label class="form-check-label" for="check-in-{{ appointment.id }}"></label>
+                                    </div>
+
                                     </form>
                                 </td>
                                 <td>
@@ -253,4 +270,3 @@
 </section>
 
 {% endblock %}
-

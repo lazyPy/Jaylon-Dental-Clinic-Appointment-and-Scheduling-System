@@ -1,10 +1,16 @@
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail, send_mass_mail
 from django.db.models.functions import TruncMonth, TruncDay
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import get_random_string
+from django.utils.html import strip_tags
 from django.views.decorators.http import require_GET
 from datetime import datetime, timedelta
 
@@ -37,6 +43,99 @@ def user_login(request):
 
 
 @login_required(login_url='login')
+def admin_profile(request):
+    if not request.user.is_superuser:
+        return redirect('login')
+
+    if request.method == 'POST':
+        new_email = request.POST.get('email')
+        new_password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if new_password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+            return redirect('admin_profile')
+
+        user = request.user
+        if User.objects.filter(email=new_email).exclude(id=user.id).exists():
+            messages.error(request, 'Email is already in use.')
+            return redirect('admin_profile')
+
+        user.email = new_email
+        if new_password:
+            user.set_password(new_password)
+        user.save()
+
+        messages.success(request, 'Profile updated successfully. Please login.')
+        logout(request)
+        return redirect('login')
+
+    return render(request, 'admin_profile.html')
+
+
+def forgot_password(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        try:
+            user = User.objects.get(email=email, is_superuser=True)
+            # Generate a random token
+            token = get_random_string(length=32)
+            user.password_reset_token = token
+            user.password_reset_token_created = datetime.now()
+            user.save()
+
+            # Send password reset email
+            reset_link = request.build_absolute_uri(
+                reverse('reset_password', args=[token])
+            )
+
+            html_message = render_to_string('admin_password_reset_email_template.html', {
+                'user': user,
+                'reset_link': reset_link,
+            })
+            plain_message = strip_tags(html_message)
+
+            send_mail(
+                subject='Reset Your Password - Jaylon Dental Clinic',
+                message=plain_message,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[user.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+
+            messages.success(request, 'Password reset instructions have been sent to your email.')
+            return redirect('login')
+        except User.DoesNotExist:
+            messages.error(request, 'No admin user with that email address exists.')
+
+    return render(request, 'forgot_password.html')
+
+
+def reset_password(request, token):
+    try:
+        user = User.objects.get(password_reset_token=token, is_superuser=True)
+        if request.method == 'POST':
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+
+            if new_password == confirm_password:
+                user.set_password(new_password)
+                user.password_reset_token = None
+                user.password_reset_token_created = None
+                user.save()
+                messages.success(request,
+                                 'Your password has been reset successfully. You can now log in.')
+                return redirect('login')
+            else:
+                messages.error(request, 'Passwords do not match.')
+        return render(request, 'reset_password.html')
+    except User.DoesNotExist:
+        messages.error(request, 'Invalid password reset token.')
+        return redirect('login')
+
+
+@login_required(login_url='login')
 def user_logout(request):
     logout(request)
     return redirect('login')  # Redirect to the login page after logout
@@ -48,7 +147,7 @@ def get_operating_hours(date):
     """
     if date.weekday() == 6:  # Sunday
         return datetime.combine(date, datetime.min.time().replace(hour=9, minute=0)), \
-               datetime.combine(date, datetime.min.time().replace(hour=12, minute=0))
+               datetime.combine(date, datetime.min.time().replace(hour=13, minute=0))
     else:  # Monday to Saturday
         return datetime.combine(date, datetime.min.time().replace(hour=8, minute=30)), \
                datetime.combine(date, datetime.min.time().replace(hour=16, minute=0))
@@ -133,9 +232,10 @@ def view_dashboard(request):
             date=date,
             start_time=start_time,
             end_time=end_time,
-            status=status
+            status=status,
         )
         appointment.save()
+
         messages.success(request, 'Appointment added successfully.')
         return redirect('dashboard')
 
@@ -463,14 +563,109 @@ def update_appointment_status(request, appointment_id):
     if not request.user.is_superuser:
         return redirect('login')
 
+    appointment = Appointment.objects.get(pk=appointment_id)
+
     if request.method == 'POST':
-        appointment = Appointment.objects.get(pk=appointment_id)
         status = request.POST.get('status')
         appointment.status = status
         appointment.save()
+
+        if appointment.status == 'Approved':
+            appointment_details_link = request.build_absolute_uri(
+                reverse('client_dashboard')
+            )
+
+            # Render the HTML template
+            html_message = render_to_string('appointment_approval_email_template.html', {
+                'appointment': appointment,
+                'appointment_details_link': appointment_details_link
+            })
+            plain_message = strip_tags(html_message)
+
+            send_mail(
+                subject='Your Appointment is Approved - Jaylon Dental Clinic',
+                message=plain_message,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[appointment.user.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+
+        elif appointment.status == 'Cancelled':
+
+            # Render the HTML template
+            html_message = render_to_string('appointment_cancellation_email_template.html', {
+                'appointment': appointment
+            })
+            plain_message = strip_tags(html_message)
+
+            send_mail(
+                subject='Appointment Cancellation - Jaylon Dental Clinic',
+                message=plain_message,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[appointment.user.email],
+                html_message=html_message,
+                fail_silently=False,
+            )
         messages.success(request, 'Appointment status updated successfully.')
 
     # Get the URL of the referring page
     referer = request.META.get('HTTP_REFERER', '/')
     # Redirect back to the referring page
     return HttpResponseRedirect(referer)
+
+
+@login_required(login_url='login')
+def update_appointment_attendance(request, appointment_id):
+    # Check if the user is not admin
+    if not request.user.is_superuser:
+        return redirect('login')
+
+    appointment = Appointment.objects.get(pk=appointment_id)
+    user = appointment.user
+
+    if request.method == 'POST':
+        attended = 'attended' in request.POST
+        appointment.attended = attended
+        appointment.save()
+
+        user.reset_missed_appointments()
+        messages.success(request, 'Appointment attendance updated successfully.')
+
+    # Get the URL of the referring page
+    referer = request.META.get('HTTP_REFERER', '/')
+    # Redirect back to the referring page
+    return HttpResponseRedirect(referer)
+
+
+def send_appointment_reminders():
+    now = timezone.localtime(timezone.now())
+    reminder_time = now + timedelta(minutes=30)
+
+    upcoming_appointments = Appointment.objects.select_related('user', 'service').filter(
+        status='Approved',
+        date=now.date(),
+        start_time__gte=now.time(),
+        start_time__lte=reminder_time.time(),
+        reminder_sent=False
+    )
+
+    for appointment in upcoming_appointments:
+        html_message = render_to_string('appointment_reminder_email_template.html', {
+            'appointment': appointment
+        })
+        plain_message = strip_tags(html_message)
+
+        send_mail(
+            subject='Reminder: Your appointment at Jaylon Dental Clinic',
+            message=plain_message,
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[appointment.user.email],
+            html_message=html_message,
+            fail_silently=False,
+        )
+
+        appointment.reminder_sent = True
+        appointment.save()
+
+    return len(upcoming_appointments)

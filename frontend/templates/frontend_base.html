@@ -61,7 +61,7 @@
             font-weight: 600;
         }
 
-        #scrollspyHome, #scrollspyService, #scrollspyGallery, #scrollspyContacts {
+        #scrollspyHome, #scrollspyService, #scrollspyGallery, #scrollspyContacts, #scrollspyPrivacy {
             padding: 3rem;
             background-color: white;
             border-radius: 15px;
@@ -250,6 +250,63 @@
             }
         });
     });
+</script>
+
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var showPrivacyModal = {% if show_privacy_modal %}true{% else %}false{% endif %};
+        var privacyModal = new bootstrap.Modal(document.getElementById('privacyModal'), {
+            backdrop: 'static',
+            keyboard: false
+        });
+        var agreeCheckbox = document.getElementById('agreeCheckbox');
+        var agreeButton = document.getElementById('agreeButton');
+
+        if (showPrivacyModal) {
+            privacyModal.show();
+        }
+
+        agreeCheckbox.addEventListener('change', function() {
+            agreeButton.disabled = !this.checked;
+        });
+
+        agreeButton.addEventListener('click', function() {
+            if (agreeCheckbox.checked) {
+                // You might want to send an AJAX request here to update the user's agreement status
+                privacyModal.hide();
+            }
+        });
+    });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var galleryModal = document.getElementById('galleryModal');
+  var carousel = document.getElementById('galleryCarousel');
+
+  galleryModal.addEventListener('show.bs.modal', function(event) {
+    var button = event.relatedTarget;
+    var slideIndex = button.getAttribute('data-bs-slide-to');
+    var carouselInstance = bootstrap.Carousel.getInstance(carousel);
+    carouselInstance.to(parseInt(slideIndex));
+  });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var servicesModal = document.getElementById('servicesModal');
+  var carousel = document.getElementById('servicesCarousel');
+
+  servicesModal.addEventListener('show.bs.modal', function(event) {
+    var button = event.relatedTarget;
+    var slideIndex = button.getAttribute('data-bs-slide-to');
+    var carouselInstance = bootstrap.Carousel.getInstance(carousel);
+    carouselInstance.to(parseInt(slideIndex));
+  });
+});
 </script>
 
 </body>

@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import logout, authenticate, login
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -9,7 +10,8 @@ from backend.models import *
 from django.core.mail import send_mail
 from django.conf import settings
 from django.urls import reverse
-from datetime import datetime
+from datetime import datetime, timedelta, date
+import requests
 
 
 def view_client_dashboard(request):
@@ -17,32 +19,72 @@ def view_client_dashboard(request):
     if request.user.is_superuser:
         return redirect('client_login')
 
+    if request.user.is_authenticated:
+        # Check previous unattended appointments
+        now = timezone.localtime(timezone.now())
+        unattended_appointments = Appointment.objects.filter(
+            Q(date__lt=now.date()) |  # All appointments from previous days
+            Q(date=now.date(), end_time__lt=now.time()),  # Today's appointments that have ended
+            user=request.user,
+            attended=False,
+            status='Approved',
+            missed_counted=False
+        )
+
+        # Mark appointments as missed and increment counter
+        for unattended_appointment in unattended_appointments:
+            unattended_appointment.missed_counted = True
+            unattended_appointment.save()
+            request.user.increment_missed_appointments()
+
+        # Check if the user's account is restricted
+        request.user.update_restriction_status()
+
     if request.method == 'POST':
         service_id = request.POST.get('service')
 
         if service_id:
-            date = request.POST.get('date')
+            date_str = request.POST.get('date')
             time_slot = request.POST.get('time_slot')
+            recaptcha_response = request.POST.get('g-recaptcha-response')
 
-            # Assuming that user_id and service_id refers to the User and Service model's primary key
-            user = User.objects.get(pk=request.user.id)
-            service = Service.objects.get(pk=service_id)
+            # Verify reCAPTCHA
+            verify_url = 'https://www.google.com/recaptcha/api/siteverify'
+            values = {
+                'secret': settings.RECAPTCHA_PRIVATE_KEY,
+                'response': recaptcha_response
+            }
+            response = requests.post(verify_url, data=values)
+            result = response.json()
 
-            # Parse the time slot
-            start_time, end_time = time_slot.split(' - ')
-            start_time = datetime.strptime(start_time, '%I:%M %p').time()
-            end_time = datetime.strptime(end_time, '%I:%M %p').time()
+            if result['success']:
 
-            # Create the appointment
-            appointment = Appointment(
-                user=user,
-                service=service,
-                date=date,
-                start_time=start_time,
-                end_time=end_time,
-            )
-            appointment.save()
-            messages.success(request, 'Appointment added successfully.')
+                # Assuming that user_id and service_id refers to the User and Service model's primary key
+                user = User.objects.get(pk=request.user.id)
+                service = Service.objects.get(pk=service_id)
+
+                # Parse the time slot
+                start_time, end_time = time_slot.split(' - ')
+                start_time = datetime.strptime(start_time, '%I:%M %p').time()
+                end_time = datetime.strptime(end_time, '%I:%M %p').time()
+
+                if request.user.is_restricted:
+                    messages.error(request,
+                                   f'Account restricted until {request.user.restriction_end_time.strftime("%m/%d/%Y %I:%M %p")}')
+                else:
+                    # Create the appointment
+                    appointment = Appointment(
+                        user=user,
+                        service=service,
+                        date=date_str,
+                        start_time=start_time,
+                        end_time=end_time,
+                    )
+                    appointment.save()
+                    messages.success(request, 'Appointment added successfully.')
+            else:
+                messages.error(request, 'Invalid reCAPTCHA. Please try again.')
+
             return redirect('client_dashboard')
         else:
             name = request.POST.get('name')
@@ -61,10 +103,10 @@ def view_client_dashboard(request):
             # Send email
             try:
                 send_mail(
-                    subject,
-                    plain_message,
-                    settings.EMAIL_HOST_USER,
-                    [settings.EMAIL_HOST_USER],
+                    subject=subject,
+                    message=plain_message,
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[settings.EMAIL_HOST_USER],
                     html_message=html_message,
                     fail_silently=False,
                 )
@@ -81,10 +123,19 @@ def view_client_dashboard(request):
     else:
         appointments = None
 
+    # Check if the user has seen the Privacy and Policy
+    show_privacy_modal = False
+    if request.user.is_authenticated and not request.user.has_agreed_privacy_policy:
+        show_privacy_modal = True
+        request.user.has_agreed_privacy_policy = True
+        request.user.save()
+
     context = {
         'services': services,
         'images': images,
-        'appointments': appointments
+        'appointments': appointments,
+        'recaptcha_site_key': settings.RECAPTCHA_PUBLIC_KEY,
+        'show_privacy_modal': show_privacy_modal,
     }
     return render(request, 'client_dashboard.html', context)
 
@@ -200,7 +251,7 @@ def client_register(request):
 
         # Send verification email
         verification_link = request.build_absolute_uri(
-            reverse('verify_email', args=[user.verification_token])
+            reverse('client_verify_email', args=[user.verification_token])
         )
 
         # Render the HTML template
@@ -249,11 +300,11 @@ def verify_email(request, token):
         return redirect('client_login')
 
 
-def forgot_password(request):
+def client_forgot_password(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email=email, is_superuser=False)
             # Generate a random token
             token = get_random_string(length=32)
             user.password_reset_token = token
@@ -262,7 +313,7 @@ def forgot_password(request):
 
             # Send password reset email
             reset_link = request.build_absolute_uri(
-                reverse('reset_password', args=[token])
+                reverse('client_reset_password', args=[token])
             )
 
             html_message = render_to_string('password_reset_email_template.html', {
@@ -285,12 +336,12 @@ def forgot_password(request):
         except User.DoesNotExist:
             messages.error(request, 'No user with that email address exists.')
 
-    return render(request, 'forgot_password.html')
+    return render(request, 'client_forgot_password.html')
 
 
-def reset_password(request, token):
+def client_reset_password(request, token):
     try:
-        user = User.objects.get(password_reset_token=token)
+        user = User.objects.get(password_reset_token=token, is_superuser=False)
         if request.method == 'POST':
             new_password = request.POST.get('new_password')
             confirm_password = request.POST.get('confirm_password')
@@ -305,7 +356,7 @@ def reset_password(request, token):
                 return redirect('client_login')
             else:
                 messages.error(request, 'Passwords do not match.')
-        return render(request, 'reset_password.html')
+        return render(request, 'client_reset_password.html')
     except User.DoesNotExist:
         messages.error(request, 'Invalid password reset token.')
         return redirect('client_login')

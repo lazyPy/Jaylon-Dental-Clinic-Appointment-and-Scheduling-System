@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'frontend',
     'cloudinary_storage',
     'cloudinary',
+    'django_apscheduler',
+    'captcha',
 ]
 
 MIDDLEWARE = [
@@ -161,3 +163,7 @@ EMAIL_HOST_PASSWORD = 'oled eiek otbv mrie'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'backend.User'
+
+RECAPTCHA_PUBLIC_KEY = '6Leo2DoqAAAAACUR34lbpAwji0nYFC5dMET-ldUL'
+RECAPTCHA_PRIVATE_KEY = '6Leo2DoqAAAAAKBzO3UwBwB8KvahQN4s2DcIWF98'
+RECAPTCHA_REQUIRED_SCORE = 0.85

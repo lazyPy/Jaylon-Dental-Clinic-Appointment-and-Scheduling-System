@@ -46,6 +46,10 @@ class User(AbstractUser):
     verification_token_created = models.DateTimeField(blank=True, null=True)
     password_reset_token = models.CharField(max_length=100, blank=True, null=True)
     password_reset_token_created = models.DateTimeField(blank=True, null=True)
+    consecutive_missed_appointments = models.IntegerField(default=0)
+    is_restricted = models.BooleanField(default=False)
+    restriction_end_time = models.DateTimeField(null=True, blank=True)
+    has_agreed_privacy_policy = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -54,12 +58,35 @@ class User(AbstractUser):
 
     def generate_verification_token(self):
         self.verification_token = get_random_string(length=32)
-        self.verification_token_created = timezone.now()
+        self.verification_token_created = timezone.localtime(timezone.now())
         self.save()
 
     def generate_password_reset_token(self):
         self.password_reset_token = get_random_string(length=32)
-        self.password_reset_token_created = timezone.now()
+        self.password_reset_token_created = timezone.localtime(timezone.now())
+        self.save()
+
+    def update_restriction_status(self):
+        now = timezone.localtime(timezone.now())
+        if self.is_restricted and self.restriction_end_time and now >= self.restriction_end_time:
+            self.is_restricted = False
+            self.restriction_end_time = None
+            self.consecutive_missed_appointments = 0
+            self.save()
+
+    def increment_missed_appointments(self):
+        now = timezone.localtime(timezone.now())
+        self.consecutive_missed_appointments += 1
+        if self.consecutive_missed_appointments == 3:
+            self.is_restricted = True
+            self.restriction_end_time = now + timezone.timedelta(hours=12)
+        elif self.consecutive_missed_appointments == 5:
+            self.is_restricted = True
+            self.restriction_end_time = now + timezone.timedelta(hours=24)
+        self.save()
+
+    def reset_missed_appointments(self):
+        self.consecutive_missed_appointments = 0
         self.save()
 
     def __str__(self):
@@ -90,10 +117,18 @@ class Appointment(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    date = models.DateField()
-    start_time = models.TimeField()
+    date = models.DateField(db_index=True)
+    start_time = models.TimeField(db_index=True)
     end_time = models.TimeField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending', db_index=True)
+    attended = models.BooleanField(default=False)
+    reminder_sent = models.BooleanField(default=False, db_index=True)
+    missed_counted = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['date', 'start_time', 'status', 'reminder_sent']),
+        ]
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} - {self.service.title} on {self.date} at {self.start_time}"
