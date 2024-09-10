@@ -15,9 +15,10 @@
       "dest": "main_system/wsgi.py"
     }
   ],
-  "functions": {
-    "main_system/wsgi.py": {
-      "maxDuration": 60
+  "crons": [
+    {
+      "path": "/api/keep-warm",
+      "schedule": "*/5 * * * *"
     }
-  }
+  ]
 }
