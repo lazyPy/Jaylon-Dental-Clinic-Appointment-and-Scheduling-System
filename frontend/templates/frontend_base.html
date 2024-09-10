@@ -115,6 +115,10 @@
           transition: transform 0.3s ease-out;
         }
 
+        .zoomable-image.zoomed {
+          cursor: move;
+        }
+
         [data-aos] {
             transition-duration: 800ms;
         }
@@ -317,40 +321,62 @@ document.addEventListener('DOMContentLoaded', function() {
       let currentScale = 1;
       let currentTranslateX = 0;
       let currentTranslateY = 0;
+      let startScale = 1;
+      let startTranslateX = 0;
+      let startTranslateY = 0;
 
       const hammer = new Hammer(img);
       hammer.get('pinch').set({ enable: true });
       hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
 
+      function updateTransform(duration = 300) {
+        img.style.transition = `transform ${duration}ms ease-out`;
+        img.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
+        img.classList.toggle('zoomed', currentScale > 1);
+      }
+
+      hammer.on('pinchstart panstart', () => {
+        startScale = currentScale;
+        startTranslateX = currentTranslateX;
+        startTranslateY = currentTranslateY;
+        img.style.transition = 'none';
+      });
+
       hammer.on('pinch pan', (ev) => {
         ev.preventDefault();
         if (ev.type === 'pinch') {
-          currentScale = Math.max(1, Math.min(ev.scale * currentScale, 4));
+          currentScale = Math.max(1, Math.min(startScale * ev.scale, 4));
         } else if (ev.type === 'pan' && currentScale > 1) {
-          currentTranslateX += ev.deltaX;
-          currentTranslateY += ev.deltaY;
+          currentTranslateX = startTranslateX + ev.deltaX;
+          currentTranslateY = startTranslateY + ev.deltaY;
         }
-        img.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
+        updateTransform(0);
       });
+
+      hammer.on('pinchend panend', updateTransform);
 
       hammer.on('doubletap', (ev) => {
         ev.preventDefault();
-        if (currentScale === 1) {
-          currentScale = 2;
-          img.style.transform = `scale(${currentScale})`;
-        } else {
-          currentScale = 1;
-          currentTranslateX = 0;
-          currentTranslateY = 0;
-          img.style.transform = 'scale(1)';
-        }
+        currentScale = currentScale === 1 ? 2 : 1;
+        currentTranslateX = currentTranslateY = 0;
+        updateTransform();
       });
 
       img.addEventListener('wheel', (ev) => {
         ev.preventDefault();
+        const rect = img.getBoundingClientRect();
+        const x = ev.clientX - rect.left;
+        const y = ev.clientY - rect.top;
         const delta = ev.deltaY > 0 ? 0.9 : 1.1;
-        currentScale = Math.max(1, Math.min(currentScale * delta, 4));
-        img.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
+        const newScale = Math.max(1, Math.min(currentScale * delta, 4));
+
+        if (newScale !== currentScale) {
+          const scaleRatio = newScale / currentScale;
+          currentTranslateX = x - scaleRatio * (x - currentTranslateX);
+          currentTranslateY = y - scaleRatio * (y - currentTranslateY);
+          currentScale = newScale;
+          updateTransform();
+        }
       });
     });
   }
