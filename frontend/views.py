@@ -283,18 +283,24 @@ def verify_email(request, token):
     try:
         user = User.objects.get(verification_token=token)
 
-        token_age = timezone.now() - user.password_reset_token_created
-        if token_age > timedelta(hours=24):
-            messages.error(request, 'Verification link has expired. Please register again.')
+        # Check if the verification token has a creation time
+        if user.verification_token_created:
+            token_age = timezone.localtime(timezone.now()) - user.verification_token_created
+            if token_age > timedelta(hours=24):
+                messages.error(request, 'Verification link has expired. Please request a new one.')
+                return redirect('client_register')
+        else:
+            # If there's no creation time, we can't verify the token age
+            messages.error(request, 'Invalid verification token. Please request a new one.')
             return redirect('client_register')
 
-        else:
-            user.email_verified = True
-            user.verification_token = None
-            user.verification_token_created = None
-            user.save()
-            messages.success(request, 'Your email has been verified. You can now log in.')
-            return redirect('client_login')
+        # If we get here, the token is valid
+        user.email_verified = True
+        user.verification_token = None
+        user.verification_token_created = None
+        user.save()
+        messages.success(request, 'Your email has been verified. You can now log in.')
+        return redirect('client_login')
     except User.DoesNotExist:
         messages.error(request, 'Invalid verification token.')
         return redirect('client_login')

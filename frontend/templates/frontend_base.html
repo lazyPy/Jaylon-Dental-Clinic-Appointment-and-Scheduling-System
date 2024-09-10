@@ -32,7 +32,6 @@
     <!-- DataTable CSS -->
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
 
-
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -97,6 +96,20 @@
         .social-icon:hover {
             transform: scale(1.2);
             color: #f8f9fa;
+        }
+
+        .zoom-container {
+          overflow: hidden;
+          cursor: zoom-in;
+        }
+        .zoom-container img {
+          transition: transform 0.3s ease;
+        }
+        .zoom-container.zoomed {
+          cursor: zoom-out;
+        }
+        .zoom-container.zoomed img {
+          transform: scale(1.5);
         }
 
         [data-aos] {
@@ -292,6 +305,21 @@ document.addEventListener('DOMContentLoaded', function() {
     var carouselInstance = bootstrap.Carousel.getInstance(carousel);
     carouselInstance.to(parseInt(slideIndex));
   });
+
+  galleryModal.addEventListener('shown.bs.modal', function() {
+    setupZoom();
+  });
+
+  function setupZoom() {
+    var zoomContainers = document.querySelectorAll('.zoom-container');
+    zoomContainers.forEach(function(container) {
+      container.addEventListener('click', function() {
+        this.classList.toggle('zoomed');
+      });
+    });
+  }
+
+  carousel.addEventListener('slid.bs.carousel', setupZoom);
 });
 </script>
 

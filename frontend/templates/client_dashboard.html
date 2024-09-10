@@ -219,12 +219,14 @@
             <h5 class="modal-title" id="galleryModalLabel">Clinic Gallery</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body p-0">
             <div id="galleryCarousel" class="carousel slide" data-bs-ride="carousel">
               <div class="carousel-inner">
                 {% for image in images %}
                 <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                  <img src="{{ image.image.url }}" class="d-block w-100" alt="Clinic Image {{ forloop.counter }}">
+                  <div class="zoom-container">
+                    <img src="{{ image.image.url }}" class="d-block w-100 zoomable-image" alt="Clinic Image {{ forloop.counter }}">
+                  </div>
                 </div>
                 {% endfor %}
               </div>
