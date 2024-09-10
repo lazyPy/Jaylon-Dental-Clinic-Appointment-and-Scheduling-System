@@ -638,34 +638,34 @@ def update_appointment_attendance(request, appointment_id):
     return HttpResponseRedirect(referer)
 
 
-def send_appointment_reminders():
-    now = timezone.localtime(timezone.now())
-    reminder_time = now + timedelta(minutes=30)
-
-    upcoming_appointments = Appointment.objects.select_related('user', 'service').filter(
-        status='Approved',
-        date=now.date(),
-        start_time__gte=now.time(),
-        start_time__lte=reminder_time.time(),
-        reminder_sent=False
-    )
-
-    for appointment in upcoming_appointments:
-        html_message = render_to_string('appointment_reminder_email_template.html', {
-            'appointment': appointment
-        })
-        plain_message = strip_tags(html_message)
-
-        send_mail(
-            subject='Reminder: Your appointment at Jaylon Dental Clinic',
-            message=plain_message,
-            from_email=settings.EMAIL_HOST_USER,
-            recipient_list=[appointment.user.email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-
-        appointment.reminder_sent = True
-        appointment.save()
-
-    return len(upcoming_appointments)
+# def send_appointment_reminders():
+#     now = timezone.localtime(timezone.now())
+#     reminder_time = now + timedelta(minutes=30)
+#
+#     upcoming_appointments = Appointment.objects.select_related('user', 'service').filter(
+#         status='Approved',
+#         date=now.date(),
+#         start_time__gte=now.time(),
+#         start_time__lte=reminder_time.time(),
+#         reminder_sent=False
+#     )
+#
+#     for appointment in upcoming_appointments:
+#         html_message = render_to_string('appointment_reminder_email_template.html', {
+#             'appointment': appointment
+#         })
+#         plain_message = strip_tags(html_message)
+#
+#         send_mail(
+#             subject='Reminder: Your appointment at Jaylon Dental Clinic',
+#             message=plain_message,
+#             from_email=settings.EMAIL_HOST_USER,
+#             recipient_list=[appointment.user.email],
+#             html_message=html_message,
+#             fail_silently=False,
+#         )
+#
+#         appointment.reminder_sent = True
+#         appointment.save()
+#
+#     return len(upcoming_appointments)
