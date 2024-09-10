@@ -307,11 +307,12 @@
 document.addEventListener('DOMContentLoaded', function() {
   var galleryModal = document.getElementById('galleryModal');
   var carousel = document.getElementById('galleryCarousel');
+  var carouselInstance = null;
 
   galleryModal.addEventListener('show.bs.modal', function(event) {
     var button = event.relatedTarget;
     var slideIndex = button.getAttribute('data-bs-slide-to');
-    var carouselInstance = bootstrap.Carousel.getOrCreateInstance(carousel);
+    carouselInstance = bootstrap.Carousel.getOrCreateInstance(carousel);
     carouselInstance.to(parseInt(slideIndex));
   });
 
@@ -333,6 +334,20 @@ document.addEventListener('DOMContentLoaded', function() {
         img.style.transition = `transform ${duration}ms ease-out`;
         img.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
         img.classList.toggle('zoomed', currentScale > 1);
+
+        // Disable carousel touch swiping when zoomed
+        if (carouselInstance) {
+          carouselInstance._config.touch = (currentScale === 1);
+          if (currentScale > 1) {
+            carousel.removeEventListener('touchstart', carouselInstance._touchCarousel);
+            carousel.removeEventListener('touchmove', carouselInstance._touchCarousel);
+            carousel.removeEventListener('touchend', carouselInstance._touchCarousel);
+          } else {
+            carousel.addEventListener('touchstart', carouselInstance._touchCarousel);
+            carousel.addEventListener('touchmove', carouselInstance._touchCarousel);
+            carousel.addEventListener('touchend', carouselInstance._touchCarousel);
+          }
+        }
       }
 
       function resetZoom() {
