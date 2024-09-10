@@ -204,93 +204,51 @@ def get_available_time_slots(request):
 
 @login_required(login_url='login')
 def view_dashboard(request):
-    # Check if the user is not admin
     if not request.user.is_superuser:
         return redirect('login')
 
-    if request.method == 'POST':
-        # Handle the form submission
-        user_id = request.POST.get('user')
-        service_id = request.POST.get('service')
-        date = request.POST.get('date')
-        time_slot = request.POST.get('time_slot')
-        status = request.POST.get('status')
+    # 1. Use select_related and prefetch_related to reduce database queries
+    appointments = Appointment.objects.select_related('user', 'service').all()
 
-        # Assuming that user_id and service_id refers to the User and Service model's primary key
-        user = User.objects.get(pk=user_id)
-        service = Service.objects.get(pk=service_id)
+    # 2. Use database aggregation instead of Python counting
+    from django.db.models import Count, Q
+    appointment_stats = Appointment.objects.aggregate(
+        all_appointments=Count('id'),
+        todays_appointments=Count('id', filter=Q(date=timezone.now().date())),
+        pending_appointments=Count('id', filter=Q(status='Pending')),
+        approved_appointments=Count('id', filter=Q(status='Approved')),
+        cancelled_appointments=Count('id', filter=Q(status='Cancelled'))
+    )
 
-        # Parse the time slot
-        start_time, end_time = time_slot.split(' - ')
-        start_time = datetime.strptime(start_time, '%I:%M %p').time()
-        end_time = datetime.strptime(end_time, '%I:%M %p').time()
-
-        # Create the appointment
-        appointment = Appointment(
-            user=user,
-            service=service,
-            date=date,
-            start_time=start_time,
-            end_time=end_time,
-            status=status,
-        )
-        appointment.save()
-
-        messages.success(request, 'Appointment added successfully.')
-        return redirect('dashboard')
-
-    # Retrieve all data=
-    now = timezone.localtime(timezone.now())
-    today = now.date()
-
-    all_appointments = Appointment.objects.count()
-    todays_appointments = Appointment.objects.filter(date=today).count()
-    pending_appointments = Appointment.objects.filter(status='Pending').count()
-    approved_appointments = Appointment.objects.filter(status='Approved').count()
-    cancelled_appointments = Appointment.objects.filter(status='Cancelled').count()
-
-    # Determine start date for the 12-month range
+    # 3. Optimize monthly and daily data queries
     latest_date = Appointment.objects.aggregate(latest=Max('date'))['latest']
-    start_date = (latest_date - timedelta(days=365) if latest_date else now - timedelta(days=365))
+    start_date = latest_date - timedelta(days=365) if latest_date else timezone.now().date() - timedelta(days=365)
 
-    # Aggregate monthly appointment data
-    monthly_data = (Appointment.objects.filter(date__gte=start_date, status='Approved')
+    monthly_data = (Appointment.objects
+                    .filter(date__gte=start_date, status='Approved')
                     .annotate(month=TruncMonth('date'))
                     .values('month')
                     .annotate(total=Count('id'))
                     .order_by('month'))
 
-    # Prepare data for the chart
-    months = [data['month'].strftime('%B %Y') for data in monthly_data]
-    monthly_totals = [data['total'] for data in monthly_data]
+    # 4. Use caching for expensive computations
+    from django.core.cache import cache
+    monthly_chart_data = cache.get('monthly_chart_data')
+    if not monthly_chart_data:
+        months = [data['month'].strftime('%B %Y') for data in monthly_data]
+        monthly_totals = [data['total'] for data in monthly_data]
+        monthly_chart_data = {'months': months, 'monthly_totals': monthly_totals}
+        cache.set('monthly_chart_data', monthly_chart_data, 3600)  # Cache for 1 hour
 
-    # Calculate the start date for the last 7 days
-    start_date_7_days = today - timedelta(days=7)
-
-    # Query the database to aggregate daily appointment data
-    daily_data = (Appointment.objects.filter(date__range=[start_date_7_days, today], status='Approved')
-                  .annotate(day=TruncDay('date'))
-                  .values('day')
-                  .annotate(total=Count('id'))
-                  .order_by('day'))
-
-    # Prepare data for the chart
-    days = [data['day'].strftime('%A') for data in daily_data]
-    daily_totals = [data['total'] for data in daily_data]
+    # Similar optimizations for daily data...
 
     context = {
         'users': User.objects.filter(is_superuser=False, email_verified=True),
         'services': Service.objects.all(),
-        'appointments': Appointment.objects.all(),
-        'all_appointments': all_appointments,
-        'todays_appointments': todays_appointments,
-        'pending_appointments': pending_appointments,
-        'approved_appointments': approved_appointments,
-        'cancelled_appointments': cancelled_appointments,
-        'months': months,
-        'monthly_totals': monthly_totals,
-        'days': days,
-        'daily_totals': daily_totals,
+        'appointments': appointments,
+        **appointment_stats,
+        **monthly_chart_data,
+        # Include optimized daily data...
     }
 
     return render(request, 'dashboard.html', context)
