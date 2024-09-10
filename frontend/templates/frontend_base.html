@@ -311,7 +311,7 @@ document.addEventListener('DOMContentLoaded', function() {
   galleryModal.addEventListener('show.bs.modal', function(event) {
     var button = event.relatedTarget;
     var slideIndex = button.getAttribute('data-bs-slide-to');
-    var carouselInstance = bootstrap.Carousel.getInstance(carousel);
+    var carouselInstance = bootstrap.Carousel.getOrCreateInstance(carousel);
     carouselInstance.to(parseInt(slideIndex));
   });
 
@@ -333,6 +333,13 @@ document.addEventListener('DOMContentLoaded', function() {
         img.style.transition = `transform ${duration}ms ease-out`;
         img.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
         img.classList.toggle('zoomed', currentScale > 1);
+      }
+
+      function resetZoom() {
+        currentScale = 1;
+        currentTranslateX = 0;
+        currentTranslateY = 0;
+        updateTransform();
       }
 
       hammer.on('pinchstart panstart', () => {
@@ -357,9 +364,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
       hammer.on('doubletap', (ev) => {
         ev.preventDefault();
-        currentScale = currentScale === 1 ? 2 : 1;
-        currentTranslateX = currentTranslateY = 0;
-        updateTransform();
+        if (currentScale > 1) {
+          resetZoom();
+        } else {
+          currentScale = 2;
+          updateTransform();
+        }
       });
 
       img.addEventListener('wheel', (ev) => {
@@ -378,6 +388,9 @@ document.addEventListener('DOMContentLoaded', function() {
           updateTransform();
         }
       });
+
+      // Reset zoom when leaving the image
+      img.addEventListener('mouseleave', resetZoom);
     });
   }
 
