@@ -106,6 +106,7 @@
           display: flex;
           align-items: center;
           justify-content: center;
+          touch-action: none;
         }
 
         .zoomable-image {
@@ -301,7 +302,6 @@
     });
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -322,32 +322,14 @@ document.addEventListener('DOMContentLoaded', function() {
       let currentScale = 1;
       let currentTranslateX = 0;
       let currentTranslateY = 0;
-      let startScale = 1;
-      let startTranslateX = 0;
-      let startTranslateY = 0;
-
-      const hammer = new Hammer(img);
-      hammer.get('pinch').set({ enable: true });
-      hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
+      let startX, startY, startDistance;
+      let isZoomed = false;
 
       function updateTransform(duration = 300) {
         img.style.transition = `transform ${duration}ms ease-out`;
         img.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
-        img.classList.toggle('zoomed', currentScale > 1);
-
-        // Disable carousel touch swiping when zoomed
-        if (carouselInstance) {
-          carouselInstance._config.touch = (currentScale === 1);
-          if (currentScale > 1) {
-            carousel.removeEventListener('touchstart', carouselInstance._touchCarousel);
-            carousel.removeEventListener('touchmove', carouselInstance._touchCarousel);
-            carousel.removeEventListener('touchend', carouselInstance._touchCarousel);
-          } else {
-            carousel.addEventListener('touchstart', carouselInstance._touchCarousel);
-            carousel.addEventListener('touchmove', carouselInstance._touchCarousel);
-            carousel.addEventListener('touchend', carouselInstance._touchCarousel);
-          }
-        }
+        isZoomed = currentScale > 1;
+        img.classList.toggle('zoomed', isZoomed);
       }
 
       function resetZoom() {
@@ -357,35 +339,55 @@ document.addEventListener('DOMContentLoaded', function() {
         updateTransform();
       }
 
-      hammer.on('pinchstart panstart', () => {
-        startScale = currentScale;
-        startTranslateX = currentTranslateX;
-        startTranslateY = currentTranslateY;
-        img.style.transition = 'none';
-      });
-
-      hammer.on('pinch pan', (ev) => {
-        ev.preventDefault();
-        if (ev.type === 'pinch') {
-          currentScale = Math.max(1, Math.min(startScale * ev.scale, 4));
-        } else if (ev.type === 'pan' && currentScale > 1) {
-          currentTranslateX = startTranslateX + ev.deltaX;
-          currentTranslateY = startTranslateY + ev.deltaY;
+      function handleTouchStart(e) {
+        if (e.touches.length === 2) {
+          startDistance = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+          );
+        } else if (e.touches.length === 1) {
+          startX = e.touches[0].pageX - currentTranslateX;
+          startY = e.touches[0].pageY - currentTranslateY;
         }
-        updateTransform(0);
-      });
+      }
 
-      hammer.on('pinchend panend', updateTransform);
+      function handleTouchMove(e) {
+        e.preventDefault();
+        if (e.touches.length === 2) {
+          const distance = Math.hypot(
+            e.touches[0].pageX - e.touches[1].pageX,
+            e.touches[0].pageY - e.touches[1].pageY
+          );
+          currentScale = Math.max(1, Math.min((distance / startDistance) * currentScale, 4));
+          updateTransform(0);
+        } else if (e.touches.length === 1 && isZoomed) {
+          currentTranslateX = e.touches[0].pageX - startX;
+          currentTranslateY = e.touches[0].pageY - startY;
+          updateTransform(0);
+        }
+      }
 
-      hammer.on('doubletap', (ev) => {
-        ev.preventDefault();
-        if (currentScale > 1) {
+      function handleTouchEnd(e) {
+        if (e.touches.length === 0) {
+          updateTransform();
+        }
+      }
+
+      function handleDoubleTap(e) {
+        e.preventDefault();
+        if (isZoomed) {
           resetZoom();
         } else {
           currentScale = 2;
           updateTransform();
         }
-      });
+      }
+
+      img.addEventListener('touchstart', handleTouchStart);
+      img.addEventListener('touchmove', handleTouchMove);
+      img.addEventListener('touchend', handleTouchEnd);
+
+      img.addEventListener('dblclick', handleDoubleTap);
 
       img.addEventListener('wheel', (ev) => {
         ev.preventDefault();
