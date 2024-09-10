@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail, send_mass_mail
+from django.core.mail import send_mail
 from django.db.models.functions import TruncMonth, TruncDay
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
@@ -13,9 +13,10 @@ from django.utils.crypto import get_random_string
 from django.utils.html import strip_tags
 from django.views.decorators.http import require_GET
 from datetime import datetime, timedelta
+from django.core.cache import cache
+from django.db.models import Count, Q, Max
 
 from backend.models import GalleryImage, Service, User, Appointment
-from django.db.models import Count, Max
 
 
 def user_login(request):
@@ -207,40 +208,54 @@ def view_dashboard(request):
     if not request.user.is_superuser:
         return redirect('login')
 
-    # 1. Use select_related and prefetch_related to reduce database queries
+    # Get current date
+    today = timezone.now().date()
+
+    # Use select_related to reduce database queries
     appointments = Appointment.objects.select_related('user', 'service').all()
 
-    # 2. Use database aggregation instead of Python counting
-    from django.db.models import Count, Q
+    # Use database aggregation for appointment counts
     appointment_stats = Appointment.objects.aggregate(
         all_appointments=Count('id'),
-        todays_appointments=Count('id', filter=Q(date=timezone.now().date())),
+        todays_appointments=Count('id', filter=Q(date=today)),
         pending_appointments=Count('id', filter=Q(status='Pending')),
         approved_appointments=Count('id', filter=Q(status='Approved')),
         cancelled_appointments=Count('id', filter=Q(status='Cancelled'))
     )
 
-    # 3. Optimize monthly and daily data queries
-    latest_date = Appointment.objects.aggregate(latest=Max('date'))['latest']
-    start_date = latest_date - timedelta(days=365) if latest_date else timezone.now().date() - timedelta(days=365)
-
-    monthly_data = (Appointment.objects
-                    .filter(date__gte=start_date, status='Approved')
-                    .annotate(month=TruncMonth('date'))
-                    .values('month')
-                    .annotate(total=Count('id'))
-                    .order_by('month'))
-
-    # 4. Use caching for expensive computations
-    from django.core.cache import cache
+    # Optimize monthly data query and caching
     monthly_chart_data = cache.get('monthly_chart_data')
     if not monthly_chart_data:
+        latest_date = Appointment.objects.aggregate(latest=Max('date'))['latest'] or today
+        start_date = latest_date - timedelta(days=365)
+
+        monthly_data = (Appointment.objects
+                        .filter(date__gte=start_date, status='Approved')
+                        .annotate(month=TruncMonth('date'))
+                        .values('month')
+                        .annotate(total=Count('id'))
+                        .order_by('month'))
+
         months = [data['month'].strftime('%B %Y') for data in monthly_data]
         monthly_totals = [data['total'] for data in monthly_data]
         monthly_chart_data = {'months': months, 'monthly_totals': monthly_totals}
         cache.set('monthly_chart_data', monthly_chart_data, 3600)  # Cache for 1 hour
 
-    # Similar optimizations for daily data...
+    # Optimize daily data query and caching
+    daily_chart_data = cache.get('daily_chart_data')
+    if not daily_chart_data:
+        start_date_7_days = today - timedelta(days=7)
+        daily_data = (Appointment.objects
+                      .filter(date__range=[start_date_7_days, today], status='Approved')
+                      .annotate(day=TruncDay('date'))
+                      .values('day')
+                      .annotate(total=Count('id'))
+                      .order_by('day'))
+
+        days = [data['day'].strftime('%A') for data in daily_data]
+        daily_totals = [data['total'] for data in daily_data]
+        daily_chart_data = {'days': days, 'daily_totals': daily_totals}
+        cache.set('daily_chart_data', daily_chart_data, 3600)  # Cache for 1 hour
 
     context = {
         'users': User.objects.filter(is_superuser=False, email_verified=True),
@@ -248,8 +263,36 @@ def view_dashboard(request):
         'appointments': appointments,
         **appointment_stats,
         **monthly_chart_data,
-        # Include optimized daily data...
+        **daily_chart_data,
     }
+
+    if request.method == 'POST':
+        # Handle form submission (appointment creation)
+        user_id = request.POST.get('user')
+        service_id = request.POST.get('service')
+        date = request.POST.get('date')
+        time_slot = request.POST.get('time_slot')
+        status = request.POST.get('status')
+
+        user = User.objects.get(pk=user_id)
+        service = Service.objects.get(pk=service_id)
+
+        start_time, end_time = time_slot.split(' - ')
+        start_time = datetime.strptime(start_time, '%I:%M %p').time()
+        end_time = datetime.strptime(end_time, '%I:%M %p').time()
+
+        appointment = Appointment(
+            user=user,
+            service=service,
+            date=date,
+            start_time=start_time,
+            end_time=end_time,
+            status=status,
+        )
+        appointment.save()
+
+        messages.success(request, 'Appointment added successfully.')
+        return redirect('dashboard')
 
     return render(request, 'dashboard.html', context)
 
