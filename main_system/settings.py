@@ -39,7 +39,6 @@ INSTALLED_APPS = [
     'frontend',
     'cloudinary_storage',
     'cloudinary',
-    'django_apscheduler',
     'captcha',
 ]
 

@@ -117,12 +117,12 @@ class Appointment(models.Model):
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
-    date = models.DateField(db_index=True)
-    start_time = models.TimeField(db_index=True)
+    date = models.DateField()
+    start_time = models.TimeField()
     end_time = models.TimeField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending', db_index=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     attended = models.BooleanField(default=False)
-    reminder_sent = models.BooleanField(default=False, db_index=True)
+    reminder_sent = models.BooleanField(default=False)
     missed_counted = models.BooleanField(default=False)
 
     class Meta:
