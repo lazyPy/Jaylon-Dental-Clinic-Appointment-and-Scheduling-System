@@ -18,7 +18,7 @@
   "crons": [
     {
       "path": "/api/cron/cancel_appointments",
-      "schedule": "10 7 * * *"
+      "schedule": "12 7 * * *"
     }
   ]
 }
