@@ -26,7 +26,7 @@
                     <a class="nav-link px-2" href="#scrollspyHome"><i class="fas fa-home"></i> Home</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link px-2" href="#scrollspyService"><i class="fas fa-tools"></i> Services</a>
+                    <a class="nav-link px-2" href="#scrollspyServices"><i class="fas fa-tools"></i> Services</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link px-2" href="#scrollspyGallery"><i class="fas fa-images"></i> Gallery</a>
@@ -58,8 +58,7 @@
     </div>
 </nav>
 
-<div data-bs-spy="scroll" data-bs-target="#navbar-example2" data-bs-root-margin="0px 0px -40%"
-     data-bs-smooth-scroll="true" class="container-fluid scrollspy-example bg-body-tertiary p-3 rounded-2" tabindex="0">
+<div data-bs-spy="scroll" data-bs-target="#navbar-example2" data-bs-root-margin="0px 0px -40%"  data-bs-smooth-scroll="true" data-bs-offset="300" class="scrollspy-example bg-body-tertiary p-3 rounded-2" tabindex="0">
 
     <div id="scrollspyHome" class="mt-4" data-aos="fade-up">
         {% if request.user.is_authenticated and not request.user.is_superuser %}
@@ -143,7 +142,7 @@
         {% endif %}
     </div>
 
-    <div id="scrollspyService" class="mt-4" aos="fade-up">
+    <div id="scrollspyServices" class="mt-4" aos="fade-up">
         <h3 class="mb-4" aos="fade-right">Our Services</h3>
         <p>Discover the range of dental services we offer to keep your smile healthy and beautiful.</p>
 
@@ -208,58 +207,49 @@
     </div>
 
     <div id="scrollspyGallery" class="mt-4" aos="fade-up">
-        <h3 class="mb-4" aos="fade-right">Clinic Gallery</h3>
-        <p>Take a virtual tour of our state-of-the-art facilities.</p>
+      <h3 class="mb-4" aos="fade-right">Clinic Gallery</h3>
+      <p>Take a virtual tour of our state-of-the-art facilities.</p>
 
-        <div class="row">
-            {% for image in images %}
-            <div class="col-md-4 col-lg-3 mb-4" aos="flip-left"
-                 aos-delay="{{ forloop.counter0|divisibleby:4|yesno:'0,100,200,300' }}">
-                <div class="card">
-                    <img src="{{ image.image.url }}" class="img-thumbnail gallery-image"
-                         alt="Clinic Image {{ forloop.counter }}" style="height: 300px; object-fit: cover;"
-                         data-bs-toggle="modal" data-bs-target="#galleryModal"
-                         data-bs-slide-to="{{ forloop.counter0 }}">
-                </div>
-            </div>
-            {% endfor %}
+      <div class="row">
+        {% for image in images %}
+        <div class="col-md-4 col-lg-3 mb-4" aos="flip-left" aos-delay="{{ forloop.counter0|divisibleby:4|yesno:'0,100,200,300' }}">
+          <div class="card">
+            <img src="{{ image.image.url }}" class="img-thumbnail gallery-image" alt="Clinic Image {{ forloop.counter }}" style="height: 300px; object-fit: cover;" data-bs-toggle="modal" data-bs-target="#galleryModal" data-bs-slide-to="{{ forloop.counter0 }}">
+          </div>
         </div>
+        {% endfor %}
+      </div>
     </div>
 
     <!-- Gallery Modal -->
     <div class="modal fade" id="galleryModal" tabindex="-1" aria-labelledby="galleryModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="galleryModalLabel">Clinic Gallery</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="galleryModalLabel">Clinic Gallery</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="galleryCarousel" class="carousel slide" data-bs-ride="carousel">
+              <div class="carousel-inner">
+                {% for image in images %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                  <img src="{{ image.image.url }}" class="d-block w-100" alt="Clinic Image {{ forloop.counter }}">
                 </div>
-                <div class="modal-body p-0">
-                    <div id="galleryCarousel" class="carousel slide" data-bs-interval="false" data-bs-touch="false">
-                        <div class="carousel-inner">
-                            {% for image in images %}
-                            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                                <div class="zoom-container">
-                                    <img src="{{ image.image.url }}" class="d-block w-100 zoomable-image"
-                                         alt="Clinic Image {{ forloop.counter }}">
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel"
-                                data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel"
-                                data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                    </div>
-                </div>
+                {% endfor %}
+              </div>
+              <button class="carousel-control-prev" type="button" data-bs-target="#galleryCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+              </button>
+              <button class="carousel-control-next" type="button" data-bs-target="#galleryCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+              </button>
             </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <div id="scrollspyContacts" class="mt-4" data-aos="fade-up">
@@ -309,16 +299,12 @@
         </div>
     </div>
 
-    <div id="scrollspyPrivacy" class="mt-4" aos="fade-up">
-        <h3 class="mb-4" aos="fade-right"><i class="fas fa-user-shield text-primary"></i> Privacy and Agreement</h3>
+    <div id="scrollspyPrivacy" class="mt-4" data-aos="fade-up">
+        <h3 class="mb-4" data-aos="fade-right"><i class="fas fa-user-shield text-primary"></i> Privacy and Agreement</h3>
         <div class="row">
-            <div class="col-md-12">
-                <p>At Jaylon Dental Clinic, we value your privacy and are committed to protecting your personal
-                    information. By using our services, you agree to the terms outlined in our privacy policy and user
-                    agreement.</p>
-                <p>For more details, please read our full <a href="#" data-bs-toggle="modal"
-                                                             data-bs-target="#privacyModal">Privacy Policy and User
-                    Agreement</a>.</p>
+            <div class="col-md-12" data-aos="fade-up" data-aos-delay="100">
+                <p>At Jaylon Dental Clinic, we value your privacy and are committed to protecting your personal information. By using our services, you agree to the terms outlined in our privacy policy and user agreement.</p>
+                <p>For more details, please read our full <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">Privacy Policy and User Agreement</a>.</p>
             </div>
         </div>
     </div>

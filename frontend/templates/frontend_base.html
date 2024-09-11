@@ -61,7 +61,7 @@
             font-weight: 600;
         }
 
-        #scrollspyHome, #scrollspyService, #scrollspyGallery, #scrollspyContacts, #scrollspyPrivacy {
+        #scrollspyHome, #scrollspyServices, #scrollspyGallery, #scrollspyContacts, #scrollspyPrivacy {
             padding: 3rem;
             background-color: white;
             border-radius: 15px;
@@ -301,8 +301,6 @@
     });
 </script>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
   var galleryModal = document.getElementById('galleryModal');
@@ -311,91 +309,9 @@ document.addEventListener('DOMContentLoaded', function() {
   galleryModal.addEventListener('show.bs.modal', function(event) {
     var button = event.relatedTarget;
     var slideIndex = button.getAttribute('data-bs-slide-to');
-    var carouselInstance = bootstrap.Carousel.getOrCreateInstance(carousel);
+    var carouselInstance = bootstrap.Carousel.getInstance(carousel);
     carouselInstance.to(parseInt(slideIndex));
   });
-
-  function initializeZoom() {
-    const images = document.querySelectorAll('.zoomable-image');
-    images.forEach(img => {
-      let currentScale = 1;
-      let currentTranslateX = 0;
-      let currentTranslateY = 0;
-      let startScale = 1;
-      let startTranslateX = 0;
-      let startTranslateY = 0;
-
-      const hammer = new Hammer(img);
-      hammer.get('pinch').set({ enable: true });
-      hammer.get('pan').set({ direction: Hammer.DIRECTION_ALL });
-
-      function updateTransform(duration = 300) {
-        img.style.transition = `transform ${duration}ms ease-out`;
-        img.style.transform = `translate(${currentTranslateX}px, ${currentTranslateY}px) scale(${currentScale})`;
-        img.classList.toggle('zoomed', currentScale > 1);
-      }
-
-      function resetZoom() {
-        currentScale = 1;
-        currentTranslateX = 0;
-        currentTranslateY = 0;
-        updateTransform();
-      }
-
-      hammer.on('pinchstart panstart', () => {
-        startScale = currentScale;
-        startTranslateX = currentTranslateX;
-        startTranslateY = currentTranslateY;
-        img.style.transition = 'none';
-      });
-
-      hammer.on('pinch pan', (ev) => {
-        ev.preventDefault();
-        if (ev.type === 'pinch') {
-          currentScale = Math.max(1, Math.min(startScale * ev.scale, 4));
-        } else if (ev.type === 'pan' && currentScale > 1) {
-          currentTranslateX = startTranslateX + ev.deltaX;
-          currentTranslateY = startTranslateY + ev.deltaY;
-        }
-        updateTransform(0);
-      });
-
-      hammer.on('pinchend panend', updateTransform);
-
-      hammer.on('doubletap', (ev) => {
-        ev.preventDefault();
-        if (currentScale > 1) {
-          resetZoom();
-        } else {
-          currentScale = 2;
-          updateTransform();
-        }
-      });
-
-      img.addEventListener('wheel', (ev) => {
-        ev.preventDefault();
-        const rect = img.getBoundingClientRect();
-        const x = ev.clientX - rect.left;
-        const y = ev.clientY - rect.top;
-        const delta = ev.deltaY > 0 ? 0.9 : 1.1;
-        const newScale = Math.max(1, Math.min(currentScale * delta, 4));
-
-        if (newScale !== currentScale) {
-          const scaleRatio = newScale / currentScale;
-          currentTranslateX = x - scaleRatio * (x - currentTranslateX);
-          currentTranslateY = y - scaleRatio * (y - currentTranslateY);
-          currentScale = newScale;
-          updateTransform();
-        }
-      });
-
-      // Reset zoom when leaving the image
-      img.addEventListener('mouseleave', resetZoom);
-    });
-  }
-
-  carousel.addEventListener('slid.bs.carousel', initializeZoom);
-  galleryModal.addEventListener('shown.bs.modal', initializeZoom);
 });
 </script>
 

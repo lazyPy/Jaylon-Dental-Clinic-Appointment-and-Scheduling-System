@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'cloudinary_storage',
     'cloudinary',
     'captcha',
+    'django_crontab',
+    'background_task',
 ]
 
 MIDDLEWARE = [

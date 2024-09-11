@@ -165,14 +165,20 @@ def get_available_time_slots(request):
     # Get operating hours for the selected date
     start_time, end_time = get_operating_hours(selected_date)
 
+    # Define lunch break
+    lunch_start = datetime.combine(selected_date, datetime.min.time().replace(hour=12, minute=0))
+    lunch_end = datetime.combine(selected_date, datetime.min.time().replace(hour=13, minute=0))
+
     # Get all non-cancelled appointments for the selected date
     appointments = Appointment.objects.filter(date=selected_date, status__in=['Pending', 'Approved']).order_by(
         'start_time')
 
-    # Create a list of busy time slots
+    # Create a list of busy time slots, including lunch break
     busy_slots = [(datetime.combine(selected_date, apt.start_time),
                    datetime.combine(selected_date, apt.end_time))
                   for apt in appointments]
+    busy_slots.append((lunch_start, lunch_end))  # Add lunch break to busy slots
+    busy_slots.sort(key=lambda x: x[0])  # Sort busy slots
 
     available_slots = []
     current_time = start_time
@@ -209,7 +215,7 @@ def view_dashboard(request):
         return redirect('login')
 
     # Get current date
-    today = timezone.now().date()
+    today = timezone.localtime(timezone.now()).date()
 
     # Use select_related to reduce database queries
     appointments = Appointment.objects.select_related('user', 'service').all()
@@ -220,7 +226,8 @@ def view_dashboard(request):
         todays_appointments=Count('id', filter=Q(date=today)),
         pending_appointments=Count('id', filter=Q(status='Pending')),
         approved_appointments=Count('id', filter=Q(status='Approved')),
-        cancelled_appointments=Count('id', filter=Q(status='Cancelled'))
+        cancelled_appointments=Count('id', filter=Q(status='Cancelled')),
+        done_appointments=Count('id', filter=Q(status='Approved', attended=True))
     )
 
     # Optimize monthly data query and caching

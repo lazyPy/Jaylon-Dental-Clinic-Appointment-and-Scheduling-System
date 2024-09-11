@@ -118,28 +118,28 @@
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('loginForm');
         const emailInput = document.getElementById('email');
-        const rememberMeCheckbox = document.getElementById('rememberMe');
+        const rememberMeClientCheckbox = document.getElementById('rememberMe');
 
         // Check if email is stored in localStorage and set it
-        const storedEmail = localStorage.getItem('rememberedEmail');
-        if (storedEmail) {
-            emailInput.value = storedEmail;
-            rememberMeCheckbox.checked = true;
+        const storedClientEmail = localStorage.getItem('rememberedClientEmail');
+        if (storedClientEmail) {
+            emailInput.value = storedClientEmail;
+            rememberMeClientCheckbox.checked = true;
         }
 
         // Handle form submission
         form.addEventListener('submit', function(e) {
-            if (rememberMeCheckbox.checked) {
-                localStorage.setItem('rememberedEmail', emailInput.value);
+            if (rememberMeClientCheckbox.checked) {
+                localStorage.setItem('rememberedClientEmail', emailInput.value);
             } else {
-                localStorage.removeItem('rememberedEmail');
+                localStorage.removeItem('rememberedClientEmail');
             }
         });
 
         // Handle checkbox change
-        rememberMeCheckbox.addEventListener('change', function() {
+        rememberMeClientCheckbox.addEventListener('change', function() {
             if (!this.checked) {
-                localStorage.removeItem('rememberedEmail');
+                localStorage.removeItem('rememberedClientEmail');
             }
         });
     });

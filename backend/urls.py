@@ -1,4 +1,6 @@
 from django.urls import path
+
+from .cron_views import cancel_unattended_appointments
 from .views import *
 
 urlpatterns = [
@@ -24,5 +26,7 @@ urlpatterns = [
     path('admin-profile/', admin_profile, name='admin_profile'),
 
     path('get-available-time-slots/', get_available_time_slots, name='get_available_time_slots'),
+
+    path('api/cron/cancel_appointments', cancel_unattended_appointments),
 
 ]

@@ -14,5 +14,11 @@
       "src": "/(.*)",
       "dest": "main_system/wsgi.py"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/cancel_appointments",
+      "schedule": "5 0 * * *"
+    }
   ]
 }
