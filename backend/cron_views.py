@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from datetime import timedelta
 from .models import Appointment
@@ -10,8 +11,9 @@ from django.conf import settings
 
 
 @csrf_exempt
+@require_http_methods(["GET", "POST", "HEAD"])
 def cancel_unattended_appointments(request):
-    if request.method == 'POST':
+    if request.method in ['POST', 'GET', 'HEAD']:
         today = timezone.localtime(timezone.now())
         yesterday = today - timedelta(days=1)
 
@@ -21,9 +23,11 @@ def cancel_unattended_appointments(request):
             date=yesterday
         )
 
+        cancelled_count = 0
         for appointment in unattended_appointments:
             appointment.status = 'Cancelled'
             appointment.save()
+            cancelled_count += 1
 
             # Send an email notification
             html_message = render_to_string('appointment_cancellation_email_template.html', {
@@ -40,6 +44,6 @@ def cancel_unattended_appointments(request):
                 fail_silently=False,
             )
 
-        return HttpResponse(f"Cancelled {unattended_appointments.count()} unattended appointments.")
+        return HttpResponse(f"Cancelled {cancelled_count} unattended appointments.")
     else:
-        return HttpResponse("This endpoint only accepts POST requests.", status=405)
+        return HttpResponse("This endpoint only accepts GET, POST, and HEAD requests.", status=405)
