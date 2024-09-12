@@ -34,7 +34,7 @@
 
             <div class="body">
                 <div class="row clearfix">
-                    <div class="col-sm-12 col-md-6">
+                    <div class="col-sm-12 col-md-5">
                         <div class="card">
                             <div class="header bg-cyan">
                                 <h2>EDIT USER</h2>
@@ -179,8 +179,45 @@
                         </div>
                     </div>
 
-                    <div class="col-sm-12 col-md-6">
+                    <!-- Medical Questionnaire -->
+                    <div class="col-sm-12 col-md-7">
                         <div class="card">
+                            <div class="header bg-cyan">
+                                <h2>MEDICAL QUESTIONNAIRE</h2>
+                            </div>
+                            <div class="body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <tbody>
+                                            {% if medical_questionnaire %}
+                                                {% for question, answer in medical_questionnaire_data %}
+                                                <tr>
+                                                    <td>{{ question }}</td>
+                                                    <td>
+                                                        {% if answer == True %}
+                                                            <span class="badge bg-green">Yes</span>
+                                                        {% elif answer == False %}
+                                                            <span class="badge bg-red">No</span>
+                                                        {% else %}
+                                                            <span class="badge bg-blue">{{ answer }}</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            {% else %}
+                                                <tr>
+                                                    <td colspan="2" class="text-center"><strong>The user hasn't filled out the questionnaire yet.</strong></td>
+                                                </tr>
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Appointment History -->
+                <div class="card">
                             <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
                                 <h2>APPOINTMENTS HISTORY</h2>
                                 <button type="button" class="btn bg-cyan btn-sm waves-effect" data-toggle="modal"
@@ -329,8 +366,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
             </div>
         </div>
         <!-- #END# Exportable Table -->

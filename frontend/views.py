@@ -148,39 +148,105 @@ def view_client_profile(request):
 
     user = User.objects.get(id=request.user.id)
 
+    # Fetch existing medical questionnaire or create a new one
+    medical_questionnaire, created = MedicalQuestionnaire.objects.get_or_create(user=user)
+
     if request.method == 'POST':
-        new_first_name = request.POST.get('first_name')
-        new_last_name = request.POST.get('last_name')
-        new_phone_number = request.POST.get('phone_number')
-        new_sex = request.POST.get('sex')
-        new_current_address = request.POST.get('current_address')
-        new_birthday = request.POST.get('birthday')
-        new_age = request.POST.get('age')
-        new_password = request.POST.get('password')
-        confirm_new_password = request.POST.get('confirm_password')
+        profile_id = request.POST.get('profile_id')
+        if profile_id:
+            new_first_name = request.POST.get('first_name')
+            new_last_name = request.POST.get('last_name')
+            new_phone_number = request.POST.get('phone_number')
+            new_sex = request.POST.get('sex')
+            new_current_address = request.POST.get('current_address')
+            new_birthday = request.POST.get('birthday')
+            new_age = request.POST.get('age')
+            new_password = request.POST.get('password')
+            confirm_new_password = request.POST.get('confirm_password')
 
-        # Update user details
-        user.first_name = new_first_name
-        user.last_name = new_last_name
-        user.phone_number = new_phone_number
-        user.sex = new_sex
-        user.current_address = new_current_address
-        user.birthday = new_birthday
-        user.age = new_age
+            # Update user details
+            user.first_name = new_first_name
+            user.last_name = new_last_name
+            user.phone_number = new_phone_number
+            user.sex = new_sex
+            user.current_address = new_current_address
+            user.birthday = new_birthday
+            user.age = new_age
 
-        # Check if passwords are being updated
-        if new_password:
-            # Check if passwords match
-            if new_password != confirm_new_password:
-                messages.error(request, 'Passwords do not match.')
-                return redirect('client_profile')
-            user.set_password(new_password)
+            # Check if passwords are being updated
+            if new_password:
+                # Check if passwords match
+                if new_password != confirm_new_password:
+                    messages.error(request, 'Passwords do not match.')
+                    return redirect('client_profile')
+                user.set_password(new_password)
 
-        user.save()
-        messages.success(request, 'Your details updated successfully!')
-        return redirect('client_dashboard')
+            user.save()
+            messages.success(request, 'Your profile information have been updated successfully.')
+            return redirect('client_dashboard')
 
-    return render(request, 'client_profile.html', {'user': user})
+        else:
+            # Update medical questionnaire
+            medical_questionnaire.physician_care = request.POST.get('q1') == 'Yes'
+            medical_questionnaire.high_blood_pressure = request.POST.get('q2') == 'Yes'
+            medical_questionnaire.heart_disease = request.POST.get('q3') == 'Yes'
+            medical_questionnaire.allergic = request.POST.get('q4') == 'Yes'
+            medical_questionnaire.diabetes = request.POST.get('q5') == 'Yes'
+            medical_questionnaire.blood_disease = request.POST.get('q6') == 'Yes'
+            medical_questionnaire.bleeder = request.POST.get('q7') == 'Yes'
+            medical_questionnaire.excessive_bleeding = request.POST.get('q8') == 'Yes'
+            medical_questionnaire.recent_infection = request.POST.get('q9') == 'Yes'
+            medical_questionnaire.anesthetic_reactions = request.POST.get('q10') == 'Yes'
+            medical_questionnaire.previous_dental_surgery = request.POST.get('q11') == 'Yes'
+            medical_questionnaire.health_impression = request.POST.get('q12')
+
+            medical_questionnaire.save()
+
+            messages.success(request, 'Your medical information have been updated successfully.')
+            return redirect('client_profile')
+
+    # Prepare medical questions for the template
+    medical_questions = [
+        {'text': 'Are you under physician\'s care?', 'type': 'yes_no',
+         'answer': 'Yes' if medical_questionnaire.physician_care else (
+             'No' if medical_questionnaire.physician_care is not None else '')},
+        {'text': 'Do you have high blood pressure?', 'type': 'yes_no',
+         'answer': 'Yes' if medical_questionnaire.high_blood_pressure else (
+             'No' if medical_questionnaire.high_blood_pressure is not None else '')},
+        {'text': 'Do you have heart disease?', 'type': 'yes_no',
+         'answer': 'Yes' if medical_questionnaire.heart_disease else (
+             'No' if medical_questionnaire.heart_disease is not None else '')},
+        {'text': 'Are you allergic to any drugs, medicine, foods, anesthetics?', 'type': 'yes_no',
+         'answer': 'Yes' if medical_questionnaire.allergic else (
+             'No' if medical_questionnaire.allergic is not None else '')},
+        {'text': 'Do you have diabetes?', 'type': 'yes_no', 'answer': 'Yes' if medical_questionnaire.diabetes else (
+            'No' if medical_questionnaire.diabetes is not None else '')},
+        {'text': 'Do you have any blood disease?', 'type': 'yes_no',
+         'answer': 'Yes' if medical_questionnaire.blood_disease else (
+             'No' if medical_questionnaire.blood_disease is not None else '')},
+        {'text': 'Are you a bleeder?', 'type': 'yes_no', 'answer': 'Yes' if medical_questionnaire.bleeder else (
+            'No' if medical_questionnaire.bleeder is not None else '')},
+        {'text': 'Have you experienced excessive bleeding after tooth extraction?', 'type': 'yes_no',
+         'answer': 'Yes' if medical_questionnaire.excessive_bleeding else (
+             'No' if medical_questionnaire.excessive_bleeding is not None else '')},
+        {'text': 'Have you or have you recently had evidence of infection such as boils, infected wounds?',
+         'type': 'yes_no', 'answer': 'Yes' if medical_questionnaire.recent_infection else (
+            'No' if medical_questionnaire.recent_infection is not None else '')},
+        {'text': 'Have you ever had any reactions from local anesthetics?', 'type': 'yes_no',
+         'answer': 'Yes' if medical_questionnaire.anesthetic_reactions else (
+             'No' if medical_questionnaire.anesthetic_reactions is not None else '')},
+        {'text': 'Have you had any dental surgery before?', 'type': 'yes_no',
+         'answer': 'Yes' if medical_questionnaire.previous_dental_surgery else (
+             'No' if medical_questionnaire.previous_dental_surgery is not None else '')},
+        {'text': 'What is your impression of your present health?', 'type': 'health_status',
+         'answer': medical_questionnaire.health_impression or ''},
+    ]
+
+    context = {
+        'user': request.user,
+        'medical_questions': medical_questions,
+    }
+    return render(request, 'client_profile.html', context)
 
 
 def client_login(request):

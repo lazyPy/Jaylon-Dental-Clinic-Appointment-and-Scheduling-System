@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 from django.core.cache import cache
 from django.db.models import Count, Q, Max
 
-from backend.models import GalleryImage, Service, User, Appointment
+from backend.models import GalleryImage, Service, User, Appointment, MedicalQuestionnaire
 
 
 def user_login(request):
@@ -541,10 +541,32 @@ def user_details(request, user_id):
             messages.success(request, 'User details updated successfully!')
             return redirect('user_details', user_id)  # Redirect back to the accounts list
 
+    try:
+        medical_questionnaire = MedicalQuestionnaire.objects.get(user=user)
+        medical_questionnaire_data = [
+            ("Are you under physician's care?", medical_questionnaire.physician_care),
+            ("Do you have high blood pressure?", medical_questionnaire.high_blood_pressure),
+            ("Do you have heart disease?", medical_questionnaire.heart_disease),
+            ("Are you allergic to any drugs, medicine, foods, anesthetics?", medical_questionnaire.allergic),
+            ("Do you have diabetes?", medical_questionnaire.diabetes),
+            ("Do you have any blood disease?", medical_questionnaire.blood_disease),
+            ("Are you a bleeder?", medical_questionnaire.bleeder),
+            ("Have you experienced excessive bleeding after tooth extraction?", medical_questionnaire.excessive_bleeding),
+            ("Have you or have you recently had evidence of infection such as boils, infected wounds?", medical_questionnaire.recent_infection),
+            ("Have you ever had any reactions from local anesthetics?", medical_questionnaire.anesthetic_reactions),
+            ("Have you had any dental surgery before?", medical_questionnaire.previous_dental_surgery),
+            ("What is your impression of your present health?", medical_questionnaire.health_impression),
+        ]
+    except MedicalQuestionnaire.DoesNotExist:
+        medical_questionnaire = None
+        medical_questionnaire_data = []
+
     context = {
         'user': user,
         'appointments': appointments,
-        'services': services,  # Include services in the context for the form
+        'services': services,
+        'medical_questionnaire': medical_questionnaire,
+        'medical_questionnaire_data': medical_questionnaire_data,
     }
     return render(request, 'user_details.html', context)
 

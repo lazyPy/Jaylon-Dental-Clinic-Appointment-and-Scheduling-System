@@ -132,3 +132,23 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name} - {self.service.title} on {self.date} at {self.start_time}"
+
+
+class MedicalQuestionnaire(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    physician_care = models.BooleanField(null=True, blank=True)
+    high_blood_pressure = models.BooleanField(null=True, blank=True)
+    heart_disease = models.BooleanField(null=True, blank=True)
+    allergic = models.BooleanField(null=True, blank=True)
+    diabetes = models.BooleanField(null=True, blank=True)
+    blood_disease = models.BooleanField(null=True, blank=True)
+    bleeder = models.BooleanField(null=True, blank=True)
+    excessive_bleeding = models.BooleanField(null=True, blank=True)
+    recent_infection = models.BooleanField(null=True, blank=True)
+    anesthetic_reactions = models.BooleanField(null=True, blank=True)
+    previous_dental_surgery = models.BooleanField(null=True, blank=True)
+    health_impression = models.CharField(max_length=5, choices=[('Good', 'Good'), ('Fair', 'Fair'), ('Poor', 'Poor')],
+                                         null=True, blank=True)
+
+    def __str__(self):
+        return f"Medical Questionnaire for {self.first_name} {self.last_name}"
